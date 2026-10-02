@@ -42,7 +42,7 @@ The `/sell` page lets signed-in users upload a product photo, submit store/conta
 
 Submissions begin as `pending`. Review them in Supabase's `seller_listings` table. Confirm product details, fulfillment, delivery fees, and settlement with the seller before approving. The transaction example at the end of `sellers.sql` publishes the product into the existing checkout catalogue and marks the submission approved. Changing only the status does not publish it. Seller payouts are handled manually; checkout continues to use Shopora's bank transfer process.
 
-Product image frames are defined in `src/lib/image-frames.json`. These frame the product portions of the supplied catalogue screenshots without altering the files. Three screenshots lack a visible product and show a photo placeholder until real photos are supplied.
+Product images use the original photos supplied in website-images.zip, with consistent contain sizing in the catalogue, hero, and checkout. Existing filenames remain stable for the Supabase catalogue. The extracted ZIP is an ignored local reference.
 
 ## Deployment
 
