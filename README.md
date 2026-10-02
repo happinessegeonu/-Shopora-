@@ -36,6 +36,14 @@ Checkout creates a `payment_pending` order, then shows the UBA transfer instruct
 
 `NEXT_PUBLIC_STORE_CURRENCY` controls storefront display; `STORE_CURRENCY` controls email formatting. They should use the same ISO 4217 currency code. Prices in the starter seed data are NGN in minor units (kobo).
 
+## Sellers
+
+The `/sell` page lets signed-in users upload a product photo, submit store/contact details and pricing, and track their submissions. Run `supabase/sellers.sql` once to create the submission table, row policies, and `seller-products` image bucket. This migration has been applied to the Shopora production project.
+
+Submissions begin as `pending`. Review them in Supabase's `seller_listings` table. Confirm product details, fulfillment, delivery fees, and settlement with the seller before approving. The transaction example at the end of `sellers.sql` publishes the product into the existing checkout catalogue and marks the submission approved. Changing only the status does not publish it. Seller payouts are handled manually; checkout continues to use Shopora's bank transfer process.
+
+Product image frames are defined in `src/lib/image-frames.json`. These frame the product portions of the supplied catalogue screenshots without altering the files. Three screenshots lack a visible product and show a photo placeholder until real photos are supplied.
+
 ## Deployment
 
 Vercel is connected to the `happinessegeonu/-Shopora-` GitHub repository. Pushing a commit to `main` triggers a new deployment.

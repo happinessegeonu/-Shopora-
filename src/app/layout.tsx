@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "./checkout.css";
 import "./auth.css";
+import "./marketplace.css";
 
 export const metadata: Metadata = {
   title: "Shopora — Good things, thoughtfully found",
