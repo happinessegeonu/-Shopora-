@@ -26,7 +26,7 @@ Add your project URL and public anon/publishable key to `.env.local` as `NEXT_PU
 
 ## Mailgun
 
-Verify a sending domain in Mailgun, configure the domain’s DNS records, then set `MAILGUN_API_KEY`, `MAILGUN_DOMAIN`, and `MAILGUN_FROM_EMAIL` in the server environment. The API key is only read by the server route. Without these values, order creation still succeeds but the response reports that email could not be sent.
+Verify a sending domain in Mailgun, configure the domain’s DNS records, then set `MAILGUN_API_KEY`, `MAILGUN_DOMAIN`, `MAILGUN_FROM_EMAIL`, and `MAILGUN_REGION` in the server environment. Set the region to `EU` for an EU Mailgun domain or `US` for a US domain. The API key is only read by the server route. Without these values, order creation still succeeds but the response reports that email could not be sent.
 
 ## Bank transfer checkout
 
