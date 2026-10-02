@@ -36,8 +36,16 @@ export async function POST(request: Request) {
   let emailSent = false;
   if (process.env.MAILGUN_API_KEY && process.env.MAILGUN_DOMAIN && process.env.MAILGUN_FROM_EMAIL) {
     try {
-      const message = new URLSearchParams({ from: process.env.MAILGUN_FROM_EMAIL, to: email, subject: `Shopora order received — ${data.order_number}`, text: `Hi ${name},\n\nThank you for shopping with Shopora. We’ve received your order ${data.order_number}.\n\n${data.items.map((i: { name: string; quantity: number; line_total: number }) => `${i.name} × ${i.quantity}: ${formatMoney(i.line_total)}`).join("\n")}\n\nItems subtotal: ${formatMoney(data.total_minor)}\nPayment status: awaiting bank transfer\n\nBank: ${bankTransfer.bank}\nAccount number: ${bankTransfer.accountNumber}\nAccount name: ${bankTransfer.accountName}\nTransfer narration/reference: ${data.order_number}\n\nPlease wait for us to confirm any delivery fees and the final amount before transferring. Your order will remain pending until we confirm receipt of payment. Please keep your transfer receipt.\n\nShopora` });
-      const response = await fetch(`https://api.mailgun.net/v3/${process.env.MAILGUN_DOMAIN}/messages`, { method: "POST", headers: { Authorization: `Basic ${Buffer.from(`api:${process.env.MAILGUN_API_KEY}`).toString("base64")}`, "Content-Type": "application/x-www-form-urlencoded" }, body: message });
+      const message = new FormData();
+      message.set("from", process.env.MAILGUN_FROM_EMAIL);
+      message.set("to", email);
+      message.set("subject", `Shopora order received — ${data.order_number}`);
+      message.set("text", `Hi ${name},\n\nThank you for shopping with Shopora. We’ve received your order ${data.order_number}.\n\n${data.items.map((i: { name: string; quantity: number; line_total: number }) => `${i.name} × ${i.quantity}: ${formatMoney(i.line_total)}`).join("\n")}\n\nItems subtotal: ${formatMoney(data.total_minor)}\nPayment status: awaiting bank transfer\n\nBank: ${bankTransfer.bank}\nAccount number: ${bankTransfer.accountNumber}\nAccount name: ${bankTransfer.accountName}\nTransfer narration/reference: ${data.order_number}\n\nPlease wait for us to confirm any delivery fees and the final amount before transferring. Your order will remain pending until we confirm receipt of payment. Please keep your transfer receipt.\n\nShopora`);
+      const response = await fetch(`https://api.mailgun.net/v3/${process.env.MAILGUN_DOMAIN}/messages`, {
+        method: "POST",
+        headers: { Authorization: `Basic ${Buffer.from(`api:${process.env.MAILGUN_API_KEY}`).toString("base64")}` },
+        body: message,
+      });
       emailSent = response.ok;
       if (!response.ok) console.error("Mailgun rejected order confirmation", response.status);
     } catch (error) { console.error("Mailgun order confirmation failed", error); }
