@@ -44,6 +44,8 @@ Submissions begin as `pending`. Review them in Supabase's `seller_listings` tabl
 
 Product images use the original photos supplied in website-images.zip, with consistent contain sizing in the catalogue, hero, and checkout. Existing filenames remain stable for the Supabase catalogue. The extracted ZIP is an ignored local reference.
 
+Run `supabase/order-recipient-details.sql` when deploying the sender and recipient checkout fields to an existing database.
+
 ## Deployment
 
 Vercel is connected to the `happinessegeonu/-Shopora-` GitHub repository. Pushing a commit to `main` triggers a new deployment.

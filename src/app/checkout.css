@@ -41,3 +41,4 @@
 .checkout-shipping,.aside-empty{font-size:9px;color:#898579;line-height:1.6}
 .checkout-aside>.back-link{padding:0;text-align:left;margin-top:11px}
 @media(max-width:760px){.checkout-header{height:68px}.checkout-layout{grid-template-columns:1fr;gap:33px;padding-block:43px 70px}.checkout-aside{grid-row:1;padding:22px}.checkout-main h1{font-size:54px}.checkout-field-row{grid-template-columns:1fr}.checkout-page .wrap{width:calc(100% - 38px)}}
+.delivery-estimate{display:grid;gap:6px;border-left:2px solid var(--green);padding:12px 14px;background:#f1eee6;font-size:11px;line-height:1.5}.delivery-estimate strong{font-size:12px;color:var(--green)}.delivery-estimate span{color:#817c71}.checkout-section-title{margin-top:12px}@media(max-width:760px){.delivery-estimate{font-size:10px}}

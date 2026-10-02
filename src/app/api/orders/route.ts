@@ -9,13 +9,17 @@ export async function POST(request: Request) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return NextResponse.json({ error: "Store checkout is not configured yet." }, { status: 503 });
-  let body: { email?: string; name?: string; address?: string; items?: Item[] };
+  let body: { email?: string; senderName?: string; senderPhone?: string; receiverName?: string; receiverPhone?: string; location?: string; state?: string; address?: string; items?: Item[] };
   try { body = await request.json(); } catch { return NextResponse.json({ error: "Please check your checkout details." }, { status: 400 }); }
   const email = typeof body.email === "string" ? body.email.trim().slice(0, 254) : "";
-  const name = typeof body.name === "string" ? body.name.trim().slice(0, 120) : "";
+  const senderName = typeof body.senderName === "string" ? body.senderName.trim().slice(0, 120) : "";
+  const senderPhone = typeof body.senderPhone === "string" ? body.senderPhone.trim().slice(0, 30) : "";
+  const receiverName = typeof body.receiverName === "string" ? body.receiverName.trim().slice(0, 120) : "";
+  const receiverPhone = typeof body.receiverPhone === "string" ? body.receiverPhone.trim().slice(0, 30) : "";
+  const location = [body.location, body.state].filter((part): part is string => typeof part === "string" && Boolean(part.trim())).map(part => part.trim()).join(", ").slice(0, 120);
   const address = typeof body.address === "string" ? body.address.trim().slice(0, 600) : "";
   const items = Array.isArray(body.items) ? body.items : [];
-  if (!/^\S+@\S+\.\S+$/.test(email) || !name || !address || items.length < 1 || items.length > 30 || items.some((i) => !i || typeof i.productId !== "string" || !Number.isInteger(i.quantity) || i.quantity < 1 || i.quantity > 50)) {
+  if (!/^\S+@\S+\.\S+$/.test(email) || !senderName || senderPhone.length < 7 || !receiverName || receiverPhone.length < 7 || !location || !address || items.length < 1 || items.length > 30 || items.some((i) => !i || typeof i.productId !== "string" || !Number.isInteger(i.quantity) || i.quantity < 1 || i.quantity > 50)) {
     return NextResponse.json({ error: "Please enter valid contact, delivery, and item details." }, { status: 400 });
   }
   const cookieStore = await cookies();
@@ -27,7 +31,7 @@ export async function POST(request: Request) {
     },
   });
   const { data: { user } } = await supabase.auth.getUser();
-  const { data, error } = await supabase.rpc("create_store_order", { p_email: email, p_name: name, p_address: address, p_items: items, p_customer_id: user?.id ?? null });
+  const { data, error } = await supabase.rpc("create_store_order", { p_email: email, p_name: senderName, p_phone: senderPhone, p_receiver_name: receiverName, p_receiver_phone: receiverPhone, p_location: location, p_address: address, p_items: items, p_customer_id: user?.id ?? null });
   if (error) {
     console.error("Order creation failed", error.message);
     return NextResponse.json({ error: error.message.includes("stock") ? "One of these items is no longer available in that quantity." : "We couldn’t place your order. Please try again." }, { status: 400 });
@@ -40,7 +44,7 @@ export async function POST(request: Request) {
       message.set("from", process.env.MAILGUN_FROM_EMAIL);
       message.set("to", email);
       message.set("subject", `Shopora order received — ${data.order_number}`);
-      message.set("text", `Hi ${name},\n\nThank you for shopping with Shopora. We’ve received your order ${data.order_number}.\n\n${data.items.map((i: { name: string; quantity: number; line_total: number }) => `${i.name} × ${i.quantity}: ${formatMoney(i.line_total)}`).join("\n")}\n\nItems subtotal: ${formatMoney(data.total_minor)}\nPayment status: awaiting bank transfer\n\nBank: ${bankTransfer.bank}\nAccount number: ${bankTransfer.accountNumber}\nAccount name: ${bankTransfer.accountName}\nTransfer narration/reference: ${data.order_number}\n\nPlease wait for us to confirm any delivery fees and the final amount before transferring. Your order will remain pending until we confirm receipt of payment. Please keep your transfer receipt.\n\nShopora`);
+      message.set("text", `Hi ${senderName},\n\nThank you for shopping with Shopora. We’ve received your order ${data.order_number}.\n\n${data.items.map((i: { name: string; quantity: number; line_total: number }) => `${i.name} × ${i.quantity}: ${formatMoney(i.line_total)}`).join("\n")}\n\nItems subtotal: ${formatMoney(data.total_minor)}\nPayment status: awaiting bank transfer\n\nDeliver to: ${receiverName}, ${receiverPhone}\nLocation: ${location}\nAddress: ${address}\nEstimated delivery: 3–4 days\n\nBank: ${bankTransfer.bank}\nAccount number: ${bankTransfer.accountNumber}\nAccount name: ${bankTransfer.accountName}\nTransfer narration/reference: ${data.order_number}\n\nWe’ll confirm the delivery fee and final amount before payment.\n\nShopora`);
       const mailgunApiBase = process.env.MAILGUN_REGION?.toUpperCase() === "EU"
         ? "https://api.eu.mailgun.net"
         : "https://api.mailgun.net";
