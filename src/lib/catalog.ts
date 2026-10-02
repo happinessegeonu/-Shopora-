@@ -15,6 +15,20 @@ const product = (id: string, name: string, category: string, price: number, imag
 });
 
 export const demoProducts: Product[] = [
+  product("iphone-13-pro-128gb", "iPhone 13 Pro 128GB — UK Used", "Electronics", 550000, "Electronics/iphone-13-pro-128gb.jpg", "sand"),
+  product("iphone-12-pro", "iPhone 12 Pro — UK Used", "Electronics", 380000, "Electronics/iphone-12-pro.jpg", "sand"),
+  product("iphone-13", "iPhone 13 — UK Used", "Electronics", 450000, "Electronics/iphone-13.jpg", "sand"),
+  product("airtab-s26-ultra", "Airtab S26 Ultra 5G", "Electronics", 180000, "Electronics/airtab-s26-ultra.jpg", "sand"),
+  product("anker-548-power-bank", "Anker 548 Power Bank", "Electronics", 160000, "Electronics/anker-548-power-bank.jpg", "sand"),
+  product("airtab-s10-ultra", "Airtab S10 Ultra Tablet Kit", "Electronics", 250000, "Electronics/airtab-s10-ultra.jpg", "sand"),
+  product("seagate-expansion", "Seagate Expansion External Drive", "Electronics", 140000, "Electronics/seagate-expansion.jpg", "sand"),
+  product("portable-a4-printer", "Portable A4 Printer with Thermal Paper", "Electronics", 120000, "Electronics/portable-a4-printer.jpg", "sand"),
+  product("atouch-x19-life", "Atouch X19 Life Tablet Kit", "Electronics", 110000, "Electronics/atouch-x19-life.jpg", "sand"),
+  product("anker-737-power-bank", "Anker 737 Power Bank 24,000mAh", "Electronics", 180000, "Electronics/anker-737-power-bank.jpg", "sand"),
+  product("hithium-hero-ee2", "Hithium Hero EE2 Power Station", "Electronics", 1500000, "Electronics/hithium-hero-ee2.jpg", "sand"),
+  product("island-breeze", "Island Breeze", "Perfumes", 18000, "Perfumes/island-breeze.jpg", "sand"),
+  product("khamrah-perfume-set", "Khamrah Eau de Parfum Gift Set", "Perfumes", 35000, "Perfumes/khamrah-perfume-set.jpg", "sand"),
+  product("kaly-perfume", "Kaly Eau de Parfum", "Perfumes", 20000, "Perfumes/kaly-perfume.jpg", "sand"),
   product("wireless-mini-printer", "Wireless Mini Printer", "Electronics", 38000, "Electronics/wireless_mini_printer.jpg", "sand"),
   product("tablet-16gb-512gb", "Tablet 16GB / 512GB", "Electronics", 220000, "Electronics/tablet_16gb_512gb.jpg", "clay"),
   product("dell-inspiron-16gb-512gb", "Dell Inspiron 16GB / 512GB", "Electronics", 1800000, "Electronics/dell_inspiron_16gb_512gb.jpg", "olive"),
