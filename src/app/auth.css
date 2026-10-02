@@ -21,3 +21,4 @@
 .auth-switch button{border:0;background:none;color:var(--ink);font-weight:600;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .auth-message{font-size:10px;line-height:1.6;color:#596b4e;background:#eef0e9;padding:11px;margin:15px 0 0}
 @media(max-width:760px){.product-art{height:clamp(285px,78vw,370px)}.product-photo.photo-electronics{transform:scale(2.65)}.product-photo.photo-perfumes{transform:scale(1.9)}.product-photo.photo-wigs{transform:scale(1.03)}.auth-modal{padding:34px 24px 27px}}
+.auth-feedback{margin-top:15px}.auth-feedback .auth-message{margin:0}.auth-resend{margin-top:10px;padding:0;border:0;background:transparent;color:var(--ink);font-size:11px;font-weight:600;text-decoration:underline;text-underline-offset:3px;cursor:pointer}.auth-resend:disabled{opacity:.55;cursor:wait}
