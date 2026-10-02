@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { demoProducts, formatPrice, type Product } from "@/lib/catalog";
 
 import { ProductImage } from "@/components/ProductImage";
+import { CustomerReviews } from "@/components/CustomerReviews";
 
 type CartLine = { product: Product; quantity: number };
 const storageKey = "shopora-cart-v1";
@@ -127,7 +128,7 @@ export default function HomePage() {
     <div className="announcement">Good finds for every kind of day <span>✳</span> Shop electronics, fragrance, and style</div>
     <header className="header wrap">
       <a className="brand" href="#top" aria-label="Shopora home">shopora<span>✳</span></a>
-      <nav className="nav"><a href="#shop">Shop all</a><a href="/sell">Sell on Shopora</a><a href="#story">Our story</a></nav>
+      <nav className="nav"><a href="#shop">Shop all</a><a href="/sell">Sell on Shopora</a><a href="#story">Our story</a><a href="#reviews">Reviews</a></nav>
       <div className="header-actions"><a className="seller-mobile-link" href="/sell">Sell</a><button className="icon-button account" onClick={() => { setAuthMessage(""); setAuthOpen(true); }} aria-label={sessionEmail ? "Open account" : "Sign in or create an account"}>{sessionEmail ? sessionEmail.split("@")[0] : "Sign in"}</button><button className="bag-button" onClick={() => setDrawer(true)}>Bag <span>{count}</span></button><button className="menu-button" onClick={() => setDrawer(true)} aria-label="Open bag">☰</button></div>
     </header>
     <section className="hero wrap" id="top">
@@ -142,6 +143,7 @@ export default function HomePage() {
     </section>
     <section className="seller-banner wrap"><div><p className="eyebrow">GROW WITH SHOPORA</p><h2>Good products deserve to be seen.</h2><p>Have something to sell? Bring your products to Shopora and reach customers looking for their next favourite.</p></div><a className="pill-button" href="/sell">Start selling <span>↗</span></a></section>
     <section className="story-section" id="story"><div className="story-art"><div className="story-flower">✿</div><span>COLLECT THE<br />EVERYDAY</span><div className="story-circle"></div></div><div className="story-copy"><p className="eyebrow">A NOTE FROM US</p><h2>Good finds for<br /><em>your everyday.</em></h2><p>From useful tech to a fragrance that feels like you, Shopora brings together things worth reaching for — chosen to make your day a little better.</p><a href="#shop" className="text-link">Find your next favourite <span>↗</span></a></div></section>
+    <CustomerReviews />
     <section className="newsletter wrap"><div><p className="eyebrow">A SMALL NOTE, NOW AND THEN</p><h2>Good things in your <em>inbox.</em></h2><p>New finds, gentle inspiration, and first dibs on the good stuff.</p></div><a className="pill-button dark" href="mailto:hello@shopora.store?subject=Shopora%20newsletter">Keep me posted <span>↗</span></a></section>
     <footer className="footer"><div className="wrap footer-inner"><a className="brand" href="#top">shopora<span>✳</span></a><p>Good things, thoughtfully found.</p><div><a href="#shop">Shop</a><a href="mailto:hello@shopora.store">Say hello</a><span>© Shopora 2026</span></div></div></footer>
 
@@ -152,3 +154,4 @@ export default function HomePage() {
     </aside></div>}
   </main>;
 }
+

@@ -49,3 +49,11 @@ Run `supabase/order-recipient-details.sql` when deploying the sender and recipie
 ## Deployment
 
 Vercel is connected to the `happinessegeonu/-Shopora-` GitHub repository. Pushing a commit to `main` triggers a new deployment.
+
+## Customer reviews
+
+Run `supabase/reviews.sql` once in the Supabase SQL editor to enable the homepage review section. Signed-in customers can submit a public name, star rating, and review. Submissions are hidden until you set `approved` to `true` in the `reviews` table editor. The homepage displays the 12 latest approved reviews. Customers cannot approve or edit reviews through the public client.
+
+## Google search discovery
+
+The search metadata, `/robots.txt`, and `/sitemap.xml` use the public address `https://shopora-amber.vercel.app`. Deploy these changes before submitting the site to Google Search Console. Add a URL-prefix property for this address, choose HTML-tag verification, and set `GOOGLE_SITE_VERIFICATION` in Vercel to only the verification tag's content value. Redeploy, verify ownership in Search Console, submit `sitemap.xml`, and use URL Inspection to request indexing of the homepage. Google controls indexing and ranking; submission does not guarantee inclusion. Update the site URLs in the layout, robots, and sitemap files if the domain changes.
