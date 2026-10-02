@@ -1,0 +1,23 @@
+.product-art{height:405px}
+.product-photo{position:absolute;inset:0;object-fit:cover;object-position:top center;transform-origin:50% 12%;mix-blend-mode:multiply}
+.product-photo.photo-electronics{transform:scale(2.8)}
+.product-photo.photo-perfumes{transform:scale(2.05)}
+.product-photo.photo-wigs{transform:scale(1.04);object-position:center 24%}
+.cart-photo{object-position:center top}
+.auth-overlay{align-items:center;justify-content:center;padding:20px}
+.auth-modal{position:relative;background:var(--paper);width:min(430px,100%);padding:37px 34px 30px;box-shadow:0 18px 70px #0002}
+.auth-modal .eyebrow{margin:0 0 11px}
+.auth-modal h2{font-size:31px;line-height:1.05;letter-spacing:-.055em;font-weight:500;margin:0 30px 23px 0}
+.auth-close{position:absolute;right:19px;top:16px}
+.google-auth-button{width:100%;height:46px;border:1px solid var(--line);background:white;display:flex;align-items:center;justify-content:center;gap:11px;font-size:11px;cursor:pointer}
+.google-mark{font-weight:700;font-size:15px;color:#4285f4}
+.auth-divider{display:flex;align-items:center;gap:10px;color:#9a968c;font-size:9px;margin:19px 0}
+.auth-divider::before,.auth-divider::after{content:"";height:1px;background:var(--line);flex:1}
+.email-auth-form{padding:0;display:grid;gap:13px}
+.email-auth-form label{display:grid;gap:7px;font-size:10px;color:#625f57}
+.email-auth-form input{width:100%;padding:12px;border:1px solid var(--line);background:transparent;outline-color:#98a18d;font-size:11px}
+.email-auth-form .pill-button{margin-top:4px}
+.auth-switch{font-size:10px;color:var(--muted);text-align:center;margin:19px 0 0}
+.auth-switch button{border:0;background:none;color:var(--ink);font-weight:600;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.auth-message{font-size:10px;line-height:1.6;color:#596b4e;background:#eef0e9;padding:11px;margin:15px 0 0}
+@media(max-width:760px){.product-art{height:clamp(285px,78vw,370px)}.product-photo.photo-electronics{transform:scale(2.65)}.product-photo.photo-perfumes{transform:scale(1.9)}.product-photo.photo-wigs{transform:scale(1.03)}.auth-modal{padding:34px 24px 27px}}
