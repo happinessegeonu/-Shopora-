@@ -52,6 +52,10 @@ test("customer and owner receive separate pending-payment emails with shipping t
     assert.match(message.text, /awaiting bank transfer/);
   }
   assert.match(requests[1].text, /not proof of payment/);
+  assert.match(requests[1].text, /Quantity: 2 \| Unit price:.*5,000 \| Line total:.*10,000/);
+  assert.match(requests[1].text, /Customer email: customer@example.com/);
+  assert.match(requests[1].text, /Customer phone: 00000000000/);
+  assert.match(requests[1].text, /Address: Test address/);
 });
 
 test("customer mail failure does not prevent the owner notification", async () => {

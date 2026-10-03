@@ -48,7 +48,7 @@ async function send(to: string, subject: string, text: string, replyTo?: string)
 export async function sendOrderEmails(order: OrderEmail) {
   const owner = mailbox(process.env.ORDER_NOTIFICATION_EMAIL);
   const replyTo = mailbox(process.env.ORDER_REPLY_TO_EMAIL) || owner;
-  const lines = order.items.map((item) => `${item.name} × ${item.quantity}: ${money(item.line_total)}`).join("\n");
+  const lines = order.items.map((item) => `${item.name}\nQuantity: ${item.quantity} | Unit price: ${money(item.line_total / item.quantity)} | Line total: ${money(item.line_total)}`).join("\n\n");
   const totals = `Items subtotal: ${money(order.subtotalMinor)}\nShipping: ${money(order.shippingMinor)}\nOrder total: ${money(order.totalMinor)}`;
   const delivery = `Deliver to: ${order.receiverName}, ${order.receiverPhone}\nLocation: ${order.location}\nAddress: ${order.address}\nEstimated delivery: 3–4 days`;
   const account = `Bank: ${bankTransfer.bank}\nAccount number: ${bankTransfer.accountNumber}\nAccount name: ${bankTransfer.accountName}\nTransfer narration/reference: ${order.orderNumber}`;

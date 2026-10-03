@@ -38,6 +38,8 @@ Orders remain `payment_pending`. For manual transfer confirmation, check the ban
 
 ## Bank transfer details
 
+Paystack integration is deferred. Order creation persists the order and database-calculated totals first, then calls the separate `sendOrderEmails` notification module. Owner alerts go to the server-only `ORDER_NOTIFICATION_EMAIL` (production: orders@makatechlimited.com), with customer contact and delivery details, every item’s quantity, unit price and line total, subtotal, shipping and grand total. The owner can reply directly to the customer to arrange an alternative payment method. A future Paystack adapter should initialize payment against this saved order and use a verified webhook to update payment status; it must not mark an order paid from checkout or email delivery. Keep payment initialization and webhook handling separate from order persistence and notifications, preserving the existing order reference and checkout response fields.
+
 Checkout creates a `payment_pending` order, then shows the UBA transfer instructions and order reference. When Mailgun is configured, the confirmation email repeats the account, items subtotal, shipping fee, and combined total. The total shown at checkout is the amount to transfer. Orders are not automatically verified or marked paid; confirm transfers and update order status through an authorized operations workflow before fulfillment. The supplied catalog has no inventory counts, so product stock is left untracked (`null`) until real counts are entered in Supabase.
 
 ## Important environment values
