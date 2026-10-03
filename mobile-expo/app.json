@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "Shopora",
+    "slug": "shopora-mobile",
+    "scheme": "shopora",
+    "plugins": ["expo-router"],
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/shopora-icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.makatechlimited.shopora"
+    },
+    "android": {
+      "package": "com.makatechlimited.shopora",
+      "adaptiveIcon": {
+        "backgroundColor": "#224737",
+        "foregroundImage": "./assets/shopora-icon.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/shopora-icon.png"
+    }
+  }
+}

@@ -1,0 +1,25 @@
+name: Check Shopora Expo app
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['mobile-expo/**', '.github/workflows/expo.yml']
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile-expo
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: mobile-expo/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npx expo export --platform android --max-workers 2

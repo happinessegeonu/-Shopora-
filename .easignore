@@ -1,0 +1,15 @@
+# EAS archives only the Expo application from this repository.
+/*
+!/mobile-expo/
+/mobile-expo/node_modules/
+/mobile-expo/.expo/
+/mobile-expo/dist/
+/mobile-expo/android/
+/mobile-expo/ios/
+/mobile-expo/.env*
+/mobile-expo/*.tsbuildinfo
+/mobile-expo/npm-debug.*
+/mobile-expo/*.jks
+/mobile-expo/*.key
+/mobile-expo/*.p8
+/mobile-expo/*.p12

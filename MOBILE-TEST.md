@@ -4,6 +4,10 @@ Status: pending. Browser emulation is not physical-phone verification.
 
 ## Expo app (primary mobile app)
 
+Tester: the owner's friend with a physical Android phone (the owner does not currently have one). APK distribution is pending setup of a separate Shopora Expo account. Do not use the ohealth accounts for this project.
+
+For the installable APK, download the Expo preview build on the friend's Android phone and install it. Follow steps 2–7 below without needing Expo Go, a development server, or the laptop's Wi-Fi. Record the APK build identifier along with the test results. The website and phone still need internet for live cart sync.
+
 1. Install Expo Go on the Android phone. Start the app from `mobile-expo` with `npx expo start --lan` and scan its QR code in Expo Go. Keep both devices on the same Wi-Fi, or use a tunnel.
 2. Sign in under Account with the same email/password as the desktop website. If the account uses only Google login, set a password on the website first.
 3. Open Cart in Expo and the bag on the website. Wait for both to say “Cart sync connected”. Add an item on the website and record that Expo displays it without refreshing, including quantity and approximate delay.
