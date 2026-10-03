@@ -1,4 +1,8 @@
 node_modules/
+mobile-expo/.expo/
+mobile-expo/dist/
+mobile-expo/android/
+mobile-expo/ios/
 .next/
 out/
 .env*

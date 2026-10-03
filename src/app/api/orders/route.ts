@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerClient, type SetAllCookies } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { createClient } from "@supabase/supabase-js";
 import { sendOrderEmails } from "@/lib/order-email";
 
 type Item = { productId: string; quantity: number };
@@ -25,14 +26,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Please enter valid contact, delivery, and item details." }, { status: 400 });
   }
   const cookieStore = await cookies();
-  const supabase = createServerClient(url, key, {
+  const authorization = request.headers.get("authorization");
+  const token = authorization?.match(/^Bearer\s+(\S+)$/i)?.[1];
+  if (authorization && !token) return NextResponse.json({ error: "Please sign in again." }, { status: 401 });
+  const supabase = token ? createClient(url, key, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  }) : createServerClient(url, key, {
     cookies: {
       getAll: () => cookieStore.getAll(),
       setAll: (values: Parameters<SetAllCookies>[0]) =>
         values.forEach(({ name, value, options }) => cookieStore.set(name, value, options)),
     },
   });
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+  if (token && (authError || !user)) return NextResponse.json({ error: "Please sign in again." }, { status: 401 });
   const { data, error } = await supabase.rpc("create_store_order", { p_email: email, p_name: senderName, p_phone: senderPhone, p_receiver_name: receiverName, p_receiver_phone: receiverPhone, p_location: location, p_address: address, p_state: state, p_items: items, p_customer_id: user?.id ?? null });
   if (error) {
     console.error("Order creation failed", error.message);

@@ -5,3 +5,4 @@ node_modules
 .vercel
 reference/price-screenshots
 mobile-android
+mobile-expo
