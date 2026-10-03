@@ -74,4 +74,8 @@ Shipping is NGN 5,000 per order for every Nigerian state and the FCT, as approve
 
 ## Seller commission
 
+## Phone app and shared cart
+
+The installable PWA is at `/app`. It reuses the website UI, Supabase Auth/project APIs, product/shipping queries and `/api/orders`, so existing accounts and order notifications work unchanged. Apply `supabase/carts.sql` before deployment. Signed-in carts use `cart_items`, authenticated atomic RPC mutations, and Supabase Realtime; the shared `useCart` hook is used by the website, app and checkout. Zero-quantity rows make removals protected realtime updates. Guest carts remain local and are not automatically merged on sign-in. No cart prices are trusted by the order procedure. Reconnect/focus refetches recover missed changes. The service worker provides an offline notice and never caches authenticated pages, carts or API responses. Physical-phone acceptance testing is pending; follow MOBILE-TEST.md. Native APK/App Store packaging is not included in this PWA deliverable.
+
 Apply supabase/commissions.sql for future seller sales. The database snapshots 10% of each approved seller product line, rounded to the nearest kobo, and the seller share separately from shipping. Existing seller-UUID product IDs identify approved seller listings. Shopora-owned products and past orders are excluded. The private seller_commission_report shows zero effective commission for fully refunded/cancelled orders, and payable amounts only after payment and delivery confirmation. Record delivery_confirmed_at after delivery and settled_at after an actual manual payout. No money moves automatically. Reconcile prior payouts and partial refunds manually. Obtain agreement from existing sellers before approving future sales.

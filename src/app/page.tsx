@@ -7,13 +7,12 @@ import { demoProducts, formatPrice, type Product } from "@/lib/catalog";
 import { ProductImage } from "@/components/ProductImage";
 import { CustomerReviews } from "@/components/CustomerReviews";
 import { useShippingRates } from "@/lib/shipping";
+import { useCart } from "@/lib/use-cart";
 
-type CartLine = { product: Product; quantity: number };
-const storageKey = "shopora-cart-v1";
 
 export default function HomePage() {
   const [products, setProducts] = useState<Product[]>(demoProducts);
-  const [cart, setCart] = useState<CartLine[]>([]);
+  const { cart, cartError, syncStatus, change: changeCart, clearPurchased } = useCart();
   const [category, setCategory] = useState("Everything");
   const [search, setSearch] = useState("");
   const [drawer, setDrawer] = useState(false);
@@ -31,10 +30,6 @@ export default function HomePage() {
   const shipping = useShippingRates();
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(storageKey);
-      if (saved) setCart(JSON.parse(saved) as CartLine[]);
-    } catch { localStorage.removeItem(storageKey); }
     if (new URLSearchParams(location.search).has("signin")) setAuthOpen(true);
     const supabase = createClient();
     if (!supabase) return;
@@ -46,7 +41,6 @@ export default function HomePage() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  useEffect(() => { localStorage.setItem(storageKey, JSON.stringify(cart)); }, [cart]);
   const categories = useMemo(() => ["Everything", ...Array.from(new Set(products.map((p) => p.category)))], [products]);
   const visible = products.filter((p) => (category === "Everything" || p.category === category) && `${p.name} ${p.description} ${p.category}`.toLowerCase().includes(search.toLowerCase()));
   const count = cart.reduce((sum, line) => sum + line.quantity, 0);
@@ -54,16 +48,15 @@ export default function HomePage() {
   const shippingRate = shipping.rates.find((rate) => rate.state === deliveryState);
 
   function add(product: Product) {
-    setCart((current) => {
-      const found = current.find((line) => line.product.id === product.id);
-      return found ? current.map((line) => line.product.id === product.id ? { ...line, quantity: line.quantity + 1 } : line) : [...current, { product, quantity: 1 }];
-    });
+    changeCart(product, 1);
     setDrawer(true);
   }
   function change(id: string, delta: number) {
-    setCart((current) => current.map((line) => line.product.id === id ? { ...line, quantity: line.quantity + delta } : line).filter((line) => line.quantity > 0));
+    const product = cart.find((line) => line.product.id === id)?.product;
+    if (product) changeCart(product, delta);
   }
   async function googleSignIn() {
+    if (navigator.userAgent.includes("ShoporaAndroid/")) { setAuthMessage("In the Android app, use your Shopora email and password. Google sign-in is available in your phone browser or installed web app."); return; }
     const supabase = createClient();
     if (!supabase) { setAuthMessage("Connect the Supabase project first to enable sign-in."); return; }
     const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${location.origin}/auth/callback` } });
@@ -125,12 +118,12 @@ export default function HomePage() {
       const response = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ senderName: form.get("senderName"), senderPhone: form.get("senderPhone"), email: form.get("email"), receiverName: form.get("receiverName"), receiverPhone: form.get("receiverPhone"), location: form.get("location"), state: form.get("state"), address: form.get("address"), items: cart.map((line) => ({ productId: line.product.id, quantity: line.quantity })) }) });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "We couldn’t place your order.");
-      setCart([]); setCheckout(false); setDrawer(false); setMessage(result.emailSent ? `Order ${result.orderNumber} received. We’ve sent a confirmation to ${form.get("email")}. Payment is pending. Your total including shipping is ${formatPrice(result.totalMinor)}. Open checkout for the transfer account.` : `Order ${result.orderNumber} received. Email confirmation could not be sent yet. Payment is pending. Your total including shipping is ${formatPrice(result.totalMinor)}. Open checkout for the transfer account.`);
+      await clearPurchased(cart); setCheckout(false); setDrawer(false); setMessage(result.emailSent ? `Order ${result.orderNumber} received. We’ve sent a confirmation to ${form.get("email")}. Payment is pending. Your total including shipping is ${formatPrice(result.totalMinor)}. Open checkout for the transfer account.` : `Order ${result.orderNumber} received. Email confirmation could not be sent yet. Payment is pending. Your total including shipping is ${formatPrice(result.totalMinor)}. Open checkout for the transfer account.`);
     } catch (error) { setMessage(error instanceof Error ? error.message : "Something went wrong. Please try again."); }
     finally { setBusy(false); }
   }
 
-  return <main>
+  return <main><p className="wrap" role="status">{cartError || syncStatus}</p>
     <div className="announcement">Good finds for every kind of day <span>✳</span> Shop electronics, fragrance, and style</div>
     <header className="header wrap">
       <a className="brand" href="#top" aria-label="Shopora home">shopora<span>✳</span></a>

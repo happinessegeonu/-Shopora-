@@ -4,6 +4,10 @@ out/
 .env*
 !.env.example
 npm-debug.log*
+mobile-android/.gradle/
+mobile-android/build/
+mobile-android/app/build/
+mobile-android/local.properties
 
 reference/price-screenshots/
 reference/website-images/
