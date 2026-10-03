@@ -99,12 +99,11 @@ export function useCart() {
     }).catch(() => { setCartError("Cart change was not saved. Please try again."); });
   }, [refresh]);
 
-  const clearPurchased = useCallback(async (purchased: CartLine[]) => {
+  const clearPurchased = useCallback(async (_purchased: CartLine[], cartCleared = true) => {
     await queue.current;
     if (user.current && client.current) {
-      const { error } = await client.current.rpc("consume_my_cart", { p_items: purchased.map((line) => ({ productId: line.product.id, quantity: line.quantity })) });
-      if (error) { setCartError("Order saved, but cart cleanup failed. Remove the purchased items before ordering again."); return; }
       await refresh();
+      if (!cartCleared) setCartError("Order saved, but cart cleanup failed. Remove the purchased items before ordering again.");
     } else { setCart([]); localStorage.removeItem(storageKey); }
   }, [refresh]);
   return { cart, cartError, cartReady, syncStatus, change, clearPurchased };

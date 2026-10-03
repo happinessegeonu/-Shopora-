@@ -34,7 +34,7 @@ export default function CheckoutPage() {
       const response = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ senderName: fields.get("senderName"), senderPhone: fields.get("senderPhone"), email: fields.get("email"), receiverName: fields.get("receiverName"), receiverPhone: fields.get("receiverPhone"), location: fields.get("location"), state: fields.get("state"), address: fields.get("address"), items: cart.map((line) => ({ productId: line.product.id, quantity: line.quantity })) }) });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "We couldn’t place your order.");
-      await clearPurchased(cart); setPlacedTotal(result.totalMinor); setPlacedSubtotal(result.subtotalMinor); setPlacedShipping(result.shippingMinor); setPlaced(true); setOrderNumber(result.orderNumber);
+      await clearPurchased(cart, result.cartCleared); setPlacedTotal(result.totalMinor); setPlacedSubtotal(result.subtotalMinor); setPlacedShipping(result.shippingMinor); setPlaced(true); setOrderNumber(result.orderNumber);
       setNotice(result.emailSent ? `Order ${result.orderNumber} received. A confirmation is on its way. Your total includes shipping.` : `Order ${result.orderNumber} received. We couldn’t send the confirmation email yet. Your total includes shipping; please keep your order number.`);
     } catch (error) { setNotice(error instanceof Error ? error.message : "Something went wrong. Please try again."); }
     finally { setBusy(false); }

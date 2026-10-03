@@ -39,6 +39,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message.includes("shipping") ? "Delivery is unavailable for the selected state. Please choose a supported delivery location." : error.message.includes("stock") ? "One of these items is no longer available in that quantity." : "We couldn’t place your order. Please try again." }, { status: 400 });
   }
 
+  let cartCleared = true;
+  if (user) {
+    const { error: cartError } = await supabase.rpc("consume_my_cart", { p_items: items });
+    cartCleared = !cartError;
+    if (cartError) console.error("Order saved but cart cleanup failed");
+  }
   const { emailSent, ownerEmailSent } = await sendOrderEmails({
     orderNumber: data.order_number,
     subtotalMinor: data.subtotal_minor,
@@ -47,5 +53,5 @@ export async function POST(request: Request) {
     items: data.items,
     email, senderName, senderPhone, receiverName, receiverPhone, location, address,
   });
-  return NextResponse.json({ orderNumber: data.order_number, emailSent, ownerEmailSent, subtotalMinor: data.subtotal_minor, shippingMinor: data.shipping_minor, totalMinor: data.total_minor }, { status: 201 });
+  return NextResponse.json({ orderNumber: data.order_number, emailSent, ownerEmailSent, cartCleared, subtotalMinor: data.subtotal_minor, shippingMinor: data.shipping_minor, totalMinor: data.total_minor }, { status: 201 });
 }
