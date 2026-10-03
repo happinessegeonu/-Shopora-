@@ -8,7 +8,7 @@ export function InstallApp() {
   useEffect(() => {
     const capture = (event: Event) => { event.preventDefault(); setPrompt(event as InstallPrompt); };
     const complete = () => { setInstalled(true); setPrompt(null); };
-    setInstalled(window.matchMedia("(display-mode: standalone)").matches);
+    setInstalled(window.matchMedia("(display-mode: standalone)").matches || navigator.userAgent.includes("ShoporaAndroid/"));
     window.addEventListener("beforeinstallprompt", capture);
     window.addEventListener("appinstalled", complete);
     if ("serviceWorker" in navigator) void navigator.serviceWorker.register("/sw.js").catch(() => {});
