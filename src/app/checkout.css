@@ -38,6 +38,11 @@
 .checkout-item>strong{font-size:9px;font-weight:500}
 .checkout-total{display:flex;justify-content:space-between;border-top:1px solid #d6d0c4;padding-top:17px;margin-top:4px;font-size:11px}
 .checkout-total strong{font-weight:600}
+.checkout-form select{width:100%;font:inherit;color:var(--ink);padding:12px;border:1px solid var(--line);background:var(--paper);border-radius:0;min-height:44px}
+.checkout-form select:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.checkout-total.shipping-line{border-top:0;padding-top:12px}
+.checkout-total.order-grand-total{font-size:15px;padding-top:18px;margin-top:17px;border-top:1px solid #d6d0c4}
+.shipping-error{color:#9d3525;font-size:12px;line-height:1.6}
 .checkout-shipping,.aside-empty{font-size:9px;color:#898579;line-height:1.6}
 .checkout-aside>.back-link{padding:0;text-align:left;margin-top:11px}
 @media(max-width:760px){.checkout-header{height:68px}.checkout-layout{grid-template-columns:1fr;gap:33px;padding-block:43px 70px}.checkout-aside{grid-row:1;padding:22px}.checkout-main h1{font-size:54px}.checkout-field-row{grid-template-columns:1fr}.checkout-page .wrap{width:calc(100% - 38px)}}

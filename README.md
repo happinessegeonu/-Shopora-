@@ -30,7 +30,7 @@ Verify a sending domain in Mailgun, configure the domain’s DNS records, then s
 
 ## Bank transfer checkout
 
-Checkout creates a `payment_pending` order, then shows the UBA transfer instructions and order reference. When Mailgun is configured, the confirmation email repeats the account and items subtotal. Delivery fees and the final payable amount must be confirmed separately before the customer transfers. Orders are not automatically verified or marked paid; confirm transfers and update order status through an authorized operations workflow before fulfillment. The supplied catalog has no inventory counts, so product stock is left untracked (`null`) until real counts are entered in Supabase.
+Checkout creates a `payment_pending` order, then shows the UBA transfer instructions and order reference. When Mailgun is configured, the confirmation email repeats the account, items subtotal, shipping fee, and combined total. The total shown at checkout is the amount to transfer. Orders are not automatically verified or marked paid; confirm transfers and update order status through an authorized operations workflow before fulfillment. The supplied catalog has no inventory counts, so product stock is left untracked (`null`) until real counts are entered in Supabase.
 
 ## Important environment values
 
@@ -57,3 +57,7 @@ Run `supabase/reviews.sql` once in the Supabase SQL editor to enable the homepag
 ## Google search discovery
 
 The search metadata, `/robots.txt`, and `/sitemap.xml` use the public address `https://shopora-amber.vercel.app`. Deploy these changes before submitting the site to Google Search Console. Add a URL-prefix property for this address, choose HTML-tag verification, and set `GOOGLE_SITE_VERIFICATION` in Vercel to only the verification tag's content value. Redeploy, verify ownership in Search Console, submit `sitemap.xml`, and use URL Inspection to request indexing of the homepage. Google controls indexing and ranking; submission does not guarantee inclusion. Update the site URLs in the layout, robots, and sitemap files if the domain changes.
+
+## Shipping-inclusive checkout
+
+Shipping is NGN 5,000 per order for every Nigerian state and the FCT, as approved by the store owner. Apply `supabase/shipping.sql` before deploying this checkout update, then apply `supabase/shipping-retire-legacy.sql` after the deployment is live. The optional `supabase/shipping-checks.sql` verifies stored totals, quantity handling, Abuja pricing, unsupported destinations, and customer identity, with all test orders and inventory changes rolled back. Manage later fees through `shipping_rates` in Supabase (integer kobo: 500000 means NGN 5000); active states appear in the delivery dropdown. The database calculates both product prices and shipping, stores `shipping_minor` separately, and includes it in `total_minor`. Checkout, bank transfer instructions, and confirmation emails use that authoritative total. Disabling a state removes it from delivery options and rejects new orders for it.
