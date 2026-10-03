@@ -30,6 +30,14 @@ Verify a sending domain in Mailgun, configure the domain’s DNS records, then s
 
 ## Bank transfer checkout
 
+## Zoho inbox and order alerts
+
+Set the server-only `ORDER_NOTIFICATION_EMAIL` to the Zoho mailbox where the store owner wants to receive new orders. Set `ORDER_REPLY_TO_EMAIL` to the business reply address (defaults to the notification address). The existing Mailgun sender delivers the alerts to Zoho; receiving alerts does not require the Zoho password or changing Zoho security settings. This does not change the sending address to Zoho: `MAILGUN_FROM_EMAIL` must remain a verified sender. Customer emails include a reply address for the store, and replying to an owner alert addresses the customer. Both messages include the stored product subtotal, shipping fee, order total, and reference. Sending failures are tracked separately and never invalidate a saved order. `node --test tests/order-email.test.cjs` checks recipient separation, totals, independent failures, and invalid notification settings without sending real emails.
+
+Orders remain `payment_pending`. For manual transfer confirmation, check the bank account for the full amount and matching order reference; an order email or screenshot is not payment verification. Once verified, mark the matching order `paid` through the authorized Supabase order administration workflow and reply to the customer from Zoho. Changing status in Supabase does not automatically send a payment-confirmation email. Automatic bank payment verification requires a separate payment-provider integration.
+
+## Bank transfer details
+
 Checkout creates a `payment_pending` order, then shows the UBA transfer instructions and order reference. When Mailgun is configured, the confirmation email repeats the account, items subtotal, shipping fee, and combined total. The total shown at checkout is the amount to transfer. Orders are not automatically verified or marked paid; confirm transfers and update order status through an authorized operations workflow before fulfillment. The supplied catalog has no inventory counts, so product stock is left untracked (`null`) until real counts are entered in Supabase.
 
 ## Important environment values

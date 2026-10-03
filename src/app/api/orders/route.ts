@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerClient, type SetAllCookies } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { bankTransfer } from "@/lib/payment";
+import { sendOrderEmails } from "@/lib/order-email";
 
 type Item = { productId: string; quantity: number };
 
@@ -39,30 +39,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message.includes("shipping") ? "Delivery is unavailable for the selected state. Please choose a supported delivery location." : error.message.includes("stock") ? "One of these items is no longer available in that quantity." : "We couldn’t place your order. Please try again." }, { status: 400 });
   }
 
-  let emailSent = false;
-  if (process.env.MAILGUN_API_KEY && process.env.MAILGUN_DOMAIN && process.env.MAILGUN_FROM_EMAIL) {
-    try {
-      const message = new FormData();
-      message.set("from", process.env.MAILGUN_FROM_EMAIL);
-      message.set("to", email);
-      message.set("subject", `Shopora order received — ${data.order_number}`);
-      message.set("text", `Hi ${senderName},\n\nThank you for shopping with Shopora. We’ve received your order ${data.order_number}.\n\n${data.items.map((i: { name: string; quantity: number; line_total: number }) => `${i.name} × ${i.quantity}: ${formatMoney(i.line_total)}`).join("\n")}\n\nItems subtotal: ${formatMoney(data.subtotal_minor)}\nShipping: ${formatMoney(data.shipping_minor)}\nOrder total: ${formatMoney(data.total_minor)}\nPayment status: awaiting bank transfer\n\nDeliver to: ${receiverName}, ${receiverPhone}\nLocation: ${location}\nAddress: ${address}\nEstimated delivery: 3–4 days\n\nBank: ${bankTransfer.bank}\nAccount number: ${bankTransfer.accountNumber}\nAccount name: ${bankTransfer.accountName}\nTransfer narration/reference: ${data.order_number}\n\nPlease transfer the order total above using your order number as the narration. Your order stays pending until payment is received and confirmed.\n\nShopora`);
-      const mailgunApiBase = process.env.MAILGUN_REGION?.toUpperCase() === "EU"
-        ? "https://api.eu.mailgun.net"
-        : "https://api.mailgun.net";
-      const response = await fetch(`${mailgunApiBase}/v3/${process.env.MAILGUN_DOMAIN}/messages`, {
-        method: "POST",
-        headers: { Authorization: `Basic ${Buffer.from(`api:${process.env.MAILGUN_API_KEY}`).toString("base64")}` },
-        body: message,
-      });
-      emailSent = response.ok;
-      if (!response.ok) console.error("Mailgun rejected order confirmation", response.status);
-    } catch (error) { console.error("Mailgun order confirmation failed", error); }
-  }
-  return NextResponse.json({ orderNumber: data.order_number, emailSent, subtotalMinor: data.subtotal_minor, shippingMinor: data.shipping_minor, totalMinor: data.total_minor }, { status: 201 });
-}
-
-function formatMoney(minor: number) {
-  const currency = process.env.STORE_CURRENCY || "NGN";
-  return new Intl.NumberFormat("en-NG", { style: "currency", currency, maximumFractionDigits: 0 }).format(minor / 100);
+  const { emailSent, ownerEmailSent } = await sendOrderEmails({
+    orderNumber: data.order_number,
+    subtotalMinor: data.subtotal_minor,
+    shippingMinor: data.shipping_minor,
+    totalMinor: data.total_minor,
+    items: data.items,
+    email, senderName, senderPhone, receiverName, receiverPhone, location, address,
+  });
+  return NextResponse.json({ orderNumber: data.order_number, emailSent, ownerEmailSent, subtotalMinor: data.subtotal_minor, shippingMinor: data.shipping_minor, totalMinor: data.total_minor }, { status: 201 });
 }
