@@ -6,12 +6,12 @@ import "./marketplace.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://shopora-amber.vercel.app"),
-  title: "Shopora | Shop Electronics, Perfumes & Wigs in Nigeria",
-  description: "Shop electronics, perfumes, and wigs at Shopora. Discover everyday essentials and favourite styles with delivery in Nigeria.",
+  title: "Shopora | Your Everyday Marketplace in Nigeria",
+  description: "Discover everyday finds and sell on Shopora in Nigeria. Foodstuff, grocery, fashion, beauty, tech, and home sellers are welcome to submit products for review.",
   openGraph: {
     siteName: "Shopora",
-    title: "Shopora | Electronics, Perfumes & Wigs",
-    description: "Discover electronics, fragrances, and styles for your everyday at Shopora.",
+    title: "Shopora | Your Market. Your People.",
+    description: "Shop everyday finds. Grow your business with Shopora, a marketplace welcoming foodstuff, fashion, beauty, tech, and home sellers.",
     type: "website",
   },
   verification: { google: process.env.GOOGLE_SITE_VERIFICATION || "Y_91T6Cqz9WNVcjGDOBIEuJLK-URZOsPSalw6BUsIgw" },

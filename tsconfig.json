@@ -17,5 +17,5 @@
     "paths": { "@/*": ["./src/*"] }
   },
   "include": ["next-env.d.ts", ".next/types/**/*.ts", "**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules", "mobile-expo"]
+  "exclude": ["node_modules", "mobile-expo", "reference/eas-archive-check", "reference/eas-archive-verified"]
 }
