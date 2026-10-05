@@ -16,7 +16,7 @@ type OrderEmail = {
 };
 
 function money(minor: number) {
-  return new Intl.NumberFormat("en-NG", { style: "currency", currency: process.env.STORE_CURRENCY || "NGN", maximumFractionDigits: 0 }).format(minor / 100);
+  return new Intl.NumberFormat("en-NG", { style: "currency", currency: process.env.STORE_CURRENCY || "NGN", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(minor / 100);
 }
 
 function mailbox(value: string | undefined) {
@@ -53,7 +53,7 @@ export async function sendOrderEmails(order: OrderEmail) {
   const delivery = `Deliver to: ${order.receiverName}, ${order.receiverPhone}\nLocation: ${order.location}\nAddress: ${order.address}\nEstimated delivery: 3–4 days`;
   const account = `Bank: ${bankTransfer.bank}\nAccount number: ${bankTransfer.accountNumber}\nAccount name: ${bankTransfer.accountName}\nTransfer narration/reference: ${order.orderNumber}`;
   const customerText = `Hi ${order.senderName},\n\nThank you for shopping with Shopora. We’ve received your order ${order.orderNumber}.\n\n${lines}\n\n${totals}\nPayment status: awaiting bank transfer\n\n${delivery}\n\n${account}\n\nPlease transfer the order total above using your order number as the narration. Your order stays pending until payment is received and confirmed.\n\nShopora`;
-  const ownerText = `New Shopora order: ${order.orderNumber}\n\nPayment status: awaiting bank transfer — not yet confirmed.\n\nCustomer: ${order.senderName}\nCustomer email: ${order.email}\nCustomer phone: ${order.senderPhone}\n\n${lines}\n\n${totals}\n\n${delivery}\n\n${account}\n\nCheck your bank account for the full order total and matching reference before confirming payment or sending the products. This order email is not proof of payment.\n\nReply to this email to contact the customer.`;
+  const ownerText = `New Shopora order: ${order.orderNumber}\n\nPayment status: awaiting bank transfer — not yet confirmed.\n\nCustomer: ${order.senderName}\nCustomer email: ${order.email}\nCustomer phone: ${order.senderPhone}\n\n${lines}\n\n${totals}\n\n${delivery}\n\n${account}\n\nCheck your bank account for the full order total and matching reference before confirming payment or sending the products. This order email is not proof of payment.\n\nReply to this email to contact the customer and arrange an alternative payment method while online payment integration is pending. Existing seller commission remains 10% of completed product sales (seller receives 90%); shipping is excluded. Confirm payment and delivery before arranging seller payouts.`;
   const [emailSent, ownerEmailSent] = await Promise.all([
     send(order.email, `Shopora order received — ${order.orderNumber}`, customerText, replyTo),
     owner ? send(owner, `New Shopora order — ${order.orderNumber} — payment pending`, ownerText, order.email) : Promise.resolve(false),

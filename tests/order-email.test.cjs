@@ -52,7 +52,7 @@ test("customer and owner receive separate pending-payment emails with shipping t
     assert.match(message.text, /awaiting bank transfer/);
   }
   assert.match(requests[1].text, /not proof of payment/);
-  assert.match(requests[1].text, /Quantity: 2 \| Unit price:.*5,000 \| Line total:.*10,000/);
+  assert.match(requests[1].text, /Quantity: 2 \| Unit price:.*5,000\.00 \| Line total:.*10,000\.00/);
   assert.match(requests[1].text, /Customer email: customer@example.com/);
   assert.match(requests[1].text, /Customer phone: 00000000000/);
   assert.match(requests[1].text, /Address: Test address/);
@@ -64,6 +64,21 @@ test("customer mail failure does not prevent the owner notification", async () =
   assert.equal(result.emailSent, false);
   assert.equal(result.ownerEmailSent, true);
   assert.equal(requests.length, 2);
+});
+
+test("complete multi-item owner alert preserves fractional prices and manual payment instructions", async () => {
+  const { sendOrderEmails, requests } = setup();
+  await sendOrderEmails({ ...order, subtotalMinor: 112050, shippingMinor: 500000, totalMinor: 612050,
+    items: [{ name: "Rice", quantity: 2, line_total: 100050 }, { name: "Spice", quantity: 1, line_total: 12000 }] });
+  const ownerText = requests[1].text;
+  assert.match(ownerText, /Rice\nQuantity: 2 \| Unit price:.*500\.25 \| Line total:.*1,000\.50/);
+  assert.match(ownerText, /Spice\nQuantity: 1 \| Unit price:.*120\.00 \| Line total:.*120\.00/);
+  assert.match(ownerText, /Items subtotal:.*1,120\.50/);
+  assert.match(ownerText, /Shipping:.*5,000\.00/);
+  assert.match(ownerText, /Order total:.*6,120\.50/);
+  assert.match(ownerText, /alternative payment method/);
+  assert.match(ownerText, /commission remains 10%/);
+  assert.match(ownerText, /shipping is excluded/);
 });
 
 test("owner mail failure does not invalidate the customer confirmation", async () => {
