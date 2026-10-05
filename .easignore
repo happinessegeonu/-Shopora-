@@ -1,6 +1,7 @@
 # EAS archives only the Expo application from this repository.
 /*
-!/mobile-expo/
+!/mobile-expo
+!/mobile-expo/**
 /mobile-expo/node_modules/
 /mobile-expo/.expo/
 /mobile-expo/dist/
@@ -13,3 +14,6 @@
 /mobile-expo/*.key
 /mobile-expo/*.p8
 /mobile-expo/*.p12
+
+/mobile-expo/*.pem
+/mobile-expo/*.mobileprovision

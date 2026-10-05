@@ -15,3 +15,6 @@ mobile-android/local.properties
 
 reference/price-screenshots/
 reference/website-images/
+
+reference/eas-archive-check/
+reference/eas-archive-verified/

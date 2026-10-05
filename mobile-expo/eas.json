@@ -2,6 +2,10 @@
   "cli": { "version": ">= 16.0.0", "appVersionSource": "local" },
   "build": {
     "preview": { "distribution": "internal", "android": { "buildType": "apk" } },
+    "testing": {
+      "extends": "preview",
+      "env": { "APP_VARIANT": "testing" }
+    },
     "production": {}
   }
 }

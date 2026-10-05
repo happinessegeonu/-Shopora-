@@ -3,8 +3,11 @@
     "name": "Shopora",
     "slug": "shopora-mobile",
     "scheme": "shopora",
-    "plugins": ["expo-router"],
-    "version": "1.0.0",
+    "plugins": [
+      "expo-router",
+      "expo-web-browser"
+    ],
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/shopora-icon.png",
     "userInterfaceStyle": "light",
@@ -13,6 +16,7 @@
       "bundleIdentifier": "com.makatechlimited.shopora"
     },
     "android": {
+      "versionCode": 2,
       "package": "com.makatechlimited.shopora",
       "adaptiveIcon": {
         "backgroundColor": "#224737",
@@ -23,6 +27,13 @@
     "web": {
       "bundler": "metro",
       "favicon": "./assets/shopora-icon.png"
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "b8cfe4e5-5026-4fc9-a366-77e38c8eac87"
+      }
+    },
+    "owner": "ohealthltd"
   }
 }

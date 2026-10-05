@@ -11,6 +11,7 @@ export type ShippingRate = { state: string; fee_minor: number };
 export const money = (minor: number) => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(minor / 100);
 type Store = {
   client: SupabaseClient; session: Session | null; products: Product[]; rates: ShippingRate[];
+  catalogLoading: boolean; reloadCatalog: () => Promise<void>;
   cart: CartLine[]; cartReady: boolean; syncing: string; error: string; catalogError: string; changing: boolean;
   change: (product: Product, delta: number) => Promise<void>; refresh: () => Promise<void>; signOut: () => Promise<void>;
 };
@@ -27,7 +28,7 @@ export async function connectStore() {
   const config = await response.json();
   if (typeof config.supabaseUrl !== 'string' || typeof config.supabaseAnonKey !== 'string') throw new Error('Store configuration is unavailable.');
   return createClient(config.supabaseUrl, config.supabaseAnonKey, { auth: {
-    storage: AsyncStorage, persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, lock: processLock,
+    storage: AsyncStorage, persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, lock: processLock, flowType: 'pkce',
   } });
 }
 
@@ -40,12 +41,37 @@ export function StoreProvider({ client, children }: { client: SupabaseClient; ch
   const [syncing, setSyncing] = useState('Sign in to sync your cart');
   const [error, setError] = useState('');
   const [catalogError, setCatalogError] = useState('');
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const catalogVersion = useRef(0);
   const [changing, setChanging] = useState(false);
   const account = useRef<string | null>(null);
   const fetchVersion = useRef(0);
   const queue = useRef(Promise.resolve());
   const pending = useRef(0);
   const alive = useRef(true);
+
+  const fetchCatalog = useCallback(async () => {
+    const version = ++catalogVersion.current;
+    try {
+      const [catalog, shipping] = await Promise.all([
+        client.from('products').select('id,name,description,category,price_minor,image_url').eq('active', true).order('created_at', { ascending: false }),
+        client.from('shipping_rates').select('state,fee_minor').eq('active', true).order('state'),
+      ]);
+      if (!alive.current || version !== catalogVersion.current) return;
+      if (!catalog.error) setProducts(catalog.data ?? []);
+      if (!shipping.error) setRates(shipping.data ?? []);
+      setCatalogError(catalog.error || shipping.error ? 'Some store details could not load. Pull down or tap Retry to reconnect.' : '');
+    } catch {
+      if (alive.current && version === catalogVersion.current) setCatalogError('Could not reach the market. Check your connection and retry.');
+    } finally {
+      if (alive.current && version === catalogVersion.current) setCatalogLoading(false);
+    }
+  }, [client]);
+
+  const reloadCatalog = useCallback(async () => {
+    setCatalogLoading(true);
+    await fetchCatalog();
+  }, [fetchCatalog]);
 
   const refresh = useCallback(async () => {
     const id = account.current;
@@ -79,21 +105,15 @@ export function StoreProvider({ client, children }: { client: SupabaseClient; ch
       }
       setSession(next);
     });
-    void Promise.all([
-      client.from('products').select('id,name,description,category,price_minor,image_url').eq('active', true).order('created_at', { ascending: false }),
-      client.from('shipping_rates').select('state,fee_minor').eq('active', true).order('state'),
-    ]).then(([catalog, shipping]) => {
-      if (!alive.current) return;
-      if (catalog.error || shipping.error) setCatalogError('Some store details could not load. Reopen the app to retry.');
-      setProducts(catalog.data ?? []); setRates(shipping.data ?? []);
-    }).catch(() => { if (alive.current) setCatalogError('Store details could not load. Please reconnect and reopen the app.'); });
+    // Load catalogue after the persisted auth session has initialized.
+    void client.auth.getSession().then(() => { if (alive.current) void fetchCatalog(); });
     client.auth.startAutoRefresh();
     const appState = AppState.addEventListener('change', state => {
-      if (state === 'active') { client.auth.startAutoRefresh(); void refresh(); }
+      if (state === 'active') { client.auth.startAutoRefresh(); void refresh(); void reloadCatalog(); }
       else client.auth.stopAutoRefresh();
     });
     return () => { alive.current = false; data.subscription.unsubscribe(); appState.remove(); client.auth.stopAutoRefresh(); };
-  }, [client, refresh]);
+  }, [client, refresh, fetchCatalog, reloadCatalog]);
 
   const id = session?.user.id;
   useEffect(() => {
@@ -130,5 +150,5 @@ export function StoreProvider({ client, children }: { client: SupabaseClient; ch
     const result = await client.auth.signOut({ scope: 'local' });
     if (result.error) throw new Error('Could not sign out. Please try again.');
   }
-  return <Context.Provider value={{ client, session, products, rates, cart, cartReady, syncing, error, catalogError, changing, change, refresh, signOut }}>{children}</Context.Provider>;
+  return <Context.Provider value={{ client, session, products, rates, catalogLoading, reloadCatalog, cart, cartReady, syncing, error, catalogError, changing, change, refresh, signOut }}>{children}</Context.Provider>;
 }
