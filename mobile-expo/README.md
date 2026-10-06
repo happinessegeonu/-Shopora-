@@ -9,7 +9,7 @@ Native React Native screens built with Expo SDK 57 and Expo Router. This is the 
 3. Keep phone and computer on the same Wi-Fi. Scan the terminal QR code using Expo Go. If LAN access is unavailable, use `npx expo start --tunnel` (requires the tunnel dependency and internet).
 4. Sign in using the website's existing email/password, then test the shared cart using `../MOBILE-TEST.md`. Existing Google-only users need to set an email password through the website first.
 
-The website must deploy `/api/mobile/config` and bearer-token support in `/api/orders` before starting the app. The configuration endpoint exposes only the same public Supabase URL and anonymous key used by the website. Database row-level security protects customer carts. No Mailgun keys or service-role keys belong in the app.
+Version 1.0.3 bundles the same public Supabase URL and anonymous key as the website in `src/lib/store-config.json`. Startup no longer waits for `/api/mobile/config`, avoiding the cancelled website-fetch error. Database row-level security protects customer carts. No Mailgun keys or service-role keys belong in the app. The website still provides bearer-token support in `/api/orders`; if the store moves to another Supabase project, update the bundled public configuration and rebuild. Run `node --test tests/startup.test.cjs` to verify startup without the website and the public key role.
 
 ## Shared API and order flow
 
