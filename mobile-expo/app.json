@@ -7,7 +7,7 @@
       "expo-router",
       "expo-web-browser"
     ],
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/shopora-icon.png",
     "userInterfaceStyle": "light",
@@ -16,7 +16,7 @@
       "bundleIdentifier": "com.makatechlimited.shopora"
     },
     "android": {
-      "versionCode": 3,
+      "versionCode": 4,
       "package": "com.makatechlimited.shopora",
       "adaptiveIcon": {
         "backgroundColor": "#224737",

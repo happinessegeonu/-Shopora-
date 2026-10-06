@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, processLock, type Session, type SupabaseClient } from '@supabase/supabase-js';
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
+import publicConfig from './store-config.json';
 
 export const SITE = 'https://shopora-amber.vercel.app';
 export type Product = { id: string; name: string; description: string; category: string; price_minor: number; image_url: string };
@@ -19,13 +20,9 @@ const Context = createContext<Store | null>(null);
 export function useStore() { const value = useContext(Context); if (!value) throw new Error('Store not ready'); return value; }
 
 export async function connectStore() {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
-  let response: Response;
-  try { response = await fetch(`${SITE}/api/mobile/config`, { signal: controller.signal }); }
-  finally { clearTimeout(timeout); }
-  if (!response.ok) throw new Error('Cannot connect to Shopora. Check your internet and try again.');
-  const config = await response.json();
+  // Public client credentials are bundled, as on the website. Store requests
+  // still use Supabase Auth and RLS; no server credentials belong in this file.
+  const config = publicConfig;
   if (typeof config.supabaseUrl !== 'string' || typeof config.supabaseAnonKey !== 'string') throw new Error('Store configuration is unavailable.');
   return createClient(config.supabaseUrl, config.supabaseAnonKey, { auth: {
     storage: AsyncStorage, persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, lock: processLock, flowType: 'pkce',
@@ -106,7 +103,9 @@ export function StoreProvider({ client, children }: { client: SupabaseClient; ch
       setSession(next);
     });
     // Load catalogue after the persisted auth session has initialized.
-    void client.auth.getSession().then(() => { if (alive.current) void fetchCatalog(); });
+    void client.auth.getSession().catch(() => {
+      if (alive.current) setError('Could not restore your sign-in. Please sign in again.');
+    }).finally(() => { if (alive.current) void fetchCatalog(); });
     client.auth.startAutoRefresh();
     const appState = AppState.addEventListener('change', state => {
       if (state === 'active') { client.auth.startAutoRefresh(); void refresh(); void reloadCatalog(); }
