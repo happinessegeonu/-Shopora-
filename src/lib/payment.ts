@@ -1,5 +1,5 @@
 export const bankTransfer = {
   bank: "UBA Bank",
-  accountNumber: "2333934582",
-  accountName: "Egeonu Chiamaka Happiness",
+  accountNumber: "1031747948",
+  accountName: "Maka Integrated Technology Limited",
 };
