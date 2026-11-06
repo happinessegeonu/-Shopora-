@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { demoProducts, formatPrice, type Product } from "@/lib/catalog";
 
+import { AccountDialog } from "@/components/AccountDialog";
 import { ProductImage } from "@/components/ProductImage";
 import { CustomerReviews } from "@/components/CustomerReviews";
 import { useShippingRates } from "@/lib/shipping";
@@ -22,11 +23,7 @@ export default function HomePage() {
   const [message, setMessage] = useState("");
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
-  const [authBusy, setAuthBusy] = useState(false);
   const [authMessage, setAuthMessage] = useState("");
-  const [confirmationEmail, setConfirmationEmail] = useState("");
-  const [canResendConfirmation, setCanResendConfirmation] = useState(false);
   const [deliveryState, setDeliveryState] = useState("");
   const shipping = useShippingRates();
 
@@ -34,7 +31,7 @@ export default function HomePage() {
     if (new URLSearchParams(location.search).has("signin")) setAuthOpen(true);
     if (new URLSearchParams(location.search).get("auth") === "error") {
       setAuthOpen(true);
-      setAuthMessage("We couldn’t complete sign-in. Please try again or use your email and password.");
+      setAuthMessage(new URLSearchParams(location.search).has("reset") ? "This reset link has expired or could not be opened. Request a new email below and open its link in this same browser." : "We couldn’t complete sign-in. Please try again or use your email and password.");
     }
     const supabase = createClient();
     if (!supabase) return;
@@ -59,64 +56,6 @@ export default function HomePage() {
   function change(id: string, delta: number) {
     const product = cart.find((line) => line.product.id === id)?.product;
     if (product) changeCart(product, delta);
-  }
-  async function googleSignIn() {
-    if (navigator.userAgent.includes("ShoporaAndroid/")) { setAuthMessage("In the Android app, use your Shopora email and password. Google sign-in is available in your phone browser or installed web app."); return; }
-    const supabase = createClient();
-    if (!supabase) { setAuthMessage("Connect the Supabase project first to enable sign-in."); return; }
-    if (authBusy) return;
-    setAuthBusy(true); setAuthMessage("");
-    try {
-      const next = new URLSearchParams(location.search).get("next") === "/sell" ? "/sell" : location.pathname === "/app" ? "/app" : "/";
-      document.cookie = `shopora_auth_next=${encodeURIComponent(next)}; Path=/; Max-Age=600; SameSite=Lax${location.protocol === "https:" ? "; Secure" : ""}`;
-      const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${location.origin}/auth/callback` } });
-      if (error) setAuthMessage(error.message);
-    } catch {
-      setAuthMessage("We couldn’t open Google sign-in. Check your connection and try again.");
-    } finally { setAuthBusy(false); }
-  }
-  async function emailAuth(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setAuthBusy(true); setAuthMessage(""); setCanResendConfirmation(false);
-    const supabase = createClient();
-    if (!supabase) { setAuthMessage("Connect the Supabase project first to enable sign-in."); setAuthBusy(false); return; }
-    const values = new FormData(event.currentTarget);
-    const email = String(values.get("email") || "").trim();
-    const password = String(values.get("password") || "");
-    try {
-      const result = authMode === "signup"
-        ? await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${location.origin}/auth/callback` } })
-        : await supabase.auth.signInWithPassword({ email, password });
-      if (result.error) {
-        setAuthMessage(result.error.message.toLowerCase().includes("email address not authorized")
-          ? "Shopora’s confirmation email is not enabled for customer addresses yet. A site owner needs to connect a custom SMTP email sender in Supabase Auth settings."
-          : result.error.message);
-        return;
-      }
-      if (authMode === "signup" && !result.data.session) {
-        setConfirmationEmail(email);
-        setCanResendConfirmation(true);
-        setAuthMessage("If this address needs confirmation, Supabase was asked to email a link. Check spam too. If you already have an account, sign in or choose Continue with Google. If no message arrives, Shopora’s email sender needs custom SMTP.");
-        return;
-      }
-      setSessionEmail(result.data.user?.email ?? email);
-      setAuthOpen(false);
-      setAuthMessage("");
-      if (new URLSearchParams(location.search).get("next") === "/sell") location.assign("/sell");
-    } catch (error) {
-      setAuthMessage(error instanceof Error ? error.message : "We couldn’t reach Supabase. Please try again.");
-    } finally { setAuthBusy(false); }
-  }
-  async function resendConfirmation() {
-    const supabase = createClient();
-    if (!supabase || !confirmationEmail) return;
-    setAuthBusy(true); setAuthMessage("");
-    try {
-      const { error } = await supabase.auth.resend({ type: "signup", email: confirmationEmail, options: { emailRedirectTo: `${location.origin}/auth/callback` } });
-      setAuthMessage(error ? error.message : "If this account still needs confirmation, a new email was requested. Check your inbox and spam.");
-    } catch (error) {
-      setAuthMessage(error instanceof Error ? error.message : "We couldn’t request the email. Please try again.");
-    } finally { setAuthBusy(false); }
   }
   async function signOut() {
     const supabase = createClient();
@@ -161,7 +100,7 @@ export default function HomePage() {
     <footer className="footer"><div className="wrap footer-inner"><a className="brand" href="#top">shopora<span>✳</span></a><p>Good things, thoughtfully found.</p><div><a href="#shop">Shop</a><a href="mailto:support@makatechlimited.com?subject=Shopora%20support">Customer support</a><span>© Shopora 2026</span></div></div></footer>
 
     {message && <div className="toast" role="status"><span>{message}</span><button onClick={() => setMessage("")} aria-label="Dismiss">×</button></div>}
-    {authOpen && <div className="overlay auth-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setAuthOpen(false); }}><section className="auth-modal" aria-labelledby="auth-title"><button className="close auth-close" onClick={() => setAuthOpen(false)} aria-label="Close sign in">×</button><p className="eyebrow">YOUR SHOPORA ACCOUNT</p><h2 id="auth-title">{sessionEmail ? "You’re signed in." : authMode === "signup" ? "Make yourself at home." : "Welcome back."}</h2>{sessionEmail ? <><p className="auth-copy">Signed in as {sessionEmail}</p><button className="pill-button dark full" onClick={signOut}>Sign out <span>↗</span></button></> : <><button type="button" className="google-auth-button" onClick={googleSignIn} disabled={authBusy}><span className="google-mark">G</span> Continue with Google</button><div className="auth-divider"><span>or use your email</span></div><form className="email-auth-form" onSubmit={emailAuth}><label>Email address<input name="email" type="email" required autoComplete="email" placeholder="you@example.com" /></label><label>Password<input name="password" type="password" required minLength={8} autoComplete={authMode === "signup" ? "new-password" : "current-password"} placeholder="At least 8 characters" /></label><button className="pill-button dark full" disabled={authBusy}>{authBusy ? "One moment…" : authMode === "signup" ? "Create account" : "Sign in with email"}<span>↗</span></button></form><p className="auth-switch">{authMode === "signup" ? "Already have an account?" : "New to Shopora?"} <button onClick={() => { setAuthMode(authMode === "signup" ? "signin" : "signup"); setAuthMessage(""); setCanResendConfirmation(false); }}>{authMode === "signup" ? "Sign in" : "Create an account"}</button></p></>}{authMessage && <div className="auth-feedback"><p className="auth-message" role="status">{authMessage}</p>{canResendConfirmation && <button type="button" className="auth-resend" onClick={resendConfirmation} disabled={authBusy}>{authBusy ? "Requesting…" : "Resend confirmation email"}</button>}</div>}</section></div>}
+    {authOpen && <AccountDialog email={sessionEmail} initialMessage={authMessage} onClose={() => setAuthOpen(false)} onSignedIn={email => { setSessionEmail(email); setAuthOpen(false); setAuthMessage(""); }} onSignOut={signOut} />}
     {drawer && <div className="overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) { setDrawer(false); setCheckout(false); } }}><aside className="drawer"><div className="drawer-head"><div><p className="eyebrow">YOUR LITTLE FINDS</p><h2>{checkout ? "Almost yours." : `Your bag (${count})`}</h2></div><button className="close" onClick={() => { setDrawer(false); setCheckout(false); }} aria-label="Close bag">×</button></div>
       {checkout ? <><form className="checkout-form" onSubmit={submitOrder}><div className="checkout-section-title"><h2>Sender details</h2></div><label>Your full name<input name="senderName" required autoComplete="name" placeholder="Your full name" /></label><label>Phone or WhatsApp<input name="senderPhone" type="tel" required autoComplete="tel" placeholder="Your phone number" /></label><label>Email for order updates<input name="email" type="email" required autoComplete="email" placeholder="you@example.com" /></label><div className="checkout-section-title"><h2>Delivery to</h2></div><label>Receiver’s full name<input name="receiverName" required autoComplete="shipping name" placeholder="Receiver’s full name" /></label><label>Receiver’s phone<input name="receiverPhone" type="tel" required autoComplete="shipping tel" placeholder="Receiver’s phone number" /></label><label>City or town<input name="location" required autoComplete="address-level2" placeholder="City or town" /></label><label>Delivery state<select name="state" required autoComplete="shipping address-level1" value={deliveryState} onChange={(event) => setDeliveryState(event.target.value)} disabled={shipping.loading || shipping.rates.length === 0}><option value="">{shipping.loading ? "Loading delivery options…" : "Select your state"}</option>{shipping.rates.map((rate) => <option key={rate.state} value={rate.state}>{rate.state}</option>)}</select></label><label>Street address<textarea name="address" required autoComplete="street-address" placeholder="House number, street, area, nearby landmark" rows={3} /></label><p className="delivery-estimate"><strong>Delivery estimate: 3–4 days</strong><span>Shipping is included in your order total.</span></p><div className="checkout-summary"><span>Items subtotal</span><strong>{formatPrice(total)}</strong></div><div className="checkout-summary"><span>Shipping</span><strong>{shippingRate ? formatPrice(shippingRate.fee_minor) : "Select delivery state"}</strong></div><div className="checkout-summary" aria-live="polite"><span>Order total</span><strong>{shippingRate ? formatPrice(total + shippingRate.fee_minor) : "Awaiting delivery state"}</strong></div>{shipping.error && <p className="shipping-error" role="alert">{shipping.error}</p>}<button className="pill-button dark full" disabled={busy || !shippingRate}>{busy ? "Placing your order…" : "Place order"}<span>↗</span></button></form><button className="back-link" onClick={() => setCheckout(false)}>← Back to your bag</button></> : cart.length === 0 ? <div className="empty-bag"><span>✳</span><p>Your bag’s taking a little breather.</p><button className="pill-button dark" onClick={() => setDrawer(false)}>Find something lovely <span>↗</span></button></div> : <><div className="cart-lines">{cart.map((line) => <div className="cart-line" key={line.product.id}><div className={`cart-thumb ${line.product.color}`}>{(line.product.image.startsWith("/") || line.product.image.startsWith("https://")) ? <ProductImage src={line.product.image} alt={line.product.name} /> : line.product.image}</div><div className="line-info"><h3>{line.product.name}</h3><p>{formatPrice(line.product.price_minor)}</p><div className="quantity"><button onClick={() => change(line.product.id, -1)} aria-label="Decrease quantity">−</button><span>{line.quantity}</span><button onClick={() => change(line.product.id, 1)} aria-label="Increase quantity">+</button></div></div><strong>{formatPrice(line.product.price_minor * line.quantity)}</strong></div>)}</div><div className="drawer-bottom"><div className="subtotal"><span>Subtotal</span><strong>{formatPrice(total)}</strong></div><p>Shipping is calculated at checkout.</p><a className="pill-button dark full" href="/checkout">Continue to checkout <span>↗</span></a><button className="back-link" onClick={() => setDrawer(false)}>Keep looking around</button></div></>}
     </aside></div>}

@@ -24,6 +24,10 @@ The storefront has both Google and email/password sign-in and sign-up. Email is 
 
 Add your project URL and public anon/publishable key to `.env.local` as `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`, then restart `npm run dev`. Do not use the Supabase service-role key in this file. Run `supabase/schema.sql` in the project SQL Editor to load the catalogue and order procedure.
 
+## Account recovery
+
+Website and `/app` account dialogs include sign-in, sign-up with password confirmation, Forgot password, and resend-confirmation forms. Recovery emails use the existing `/auth/callback` allowlist entry and a fixed destination `/auth/reset-password`; no external redirect destination is accepted. With PKCE, open the newest recovery/confirmation link in the same browser that requested it. Email delivery depends on Supabase Auth's SMTP configuration (separate from order emails sent by Mailgun). Resend controls have a 60-second client cooldown; Supabase still enforces its own server rate limits. Test helpers with `node --test tests/auth-feedback.test.cjs`. End-to-end email delivery and password replacement require a consenting test account; automated checks do not change real account passwords.
+
 ## Mailgun
 
 Verify a sending domain in Mailgun, configure the domain’s DNS records, then set `MAILGUN_API_KEY`, `MAILGUN_DOMAIN`, `MAILGUN_FROM_EMAIL`, and `MAILGUN_REGION` in the server environment. Set the region to `EU` for an EU Mailgun domain or `US` for a US domain. The API key is only read by the server route. Without these values, order creation still succeeds but the response reports that email could not be sent.
