@@ -7,7 +7,7 @@ DevOps owns deployment. No Railway project, database, domain record or live appl
 Run two services in the same Railway project/environment/region:
 
 - **Shopora web:** supplied Dockerfile; Node 22, Next.js standalone backend and frontend. It binds 0.0.0.0 and Railway's PORT. No web-service volume is required.
-- **PostgreSQL:** your ordinary PostgreSQL 17 service/container with a persistent qvolume. This is your database deployment, not a managed authentication provider. Use Railway's PostgreSQL template or your own PostgreSQL container with the correct PGDATA and volume mount. Do not use ephemeral web-container disk for PostgreSQL.
+- **PostgreSQL:** your ordinary PostgreSQL 17 service/container with a persistent volume. This is your database deployment, not a managed authentication provider. Use Railway's PostgreSQL template or your own PostgreSQL container with the correct PGDATA and volume mount. Do not use ephemeral web-container disk for PostgreSQL.
 
 Keep the database private. Railway's private service hostname works inside its project environment, not from a developer laptop. If temporary public migration access is necessary, restrict and secure it, verify TLS, and remove it afterward. `railway run` locally does not make private DNS reachable from a laptop.
 
@@ -46,7 +46,7 @@ Use MIGRATION_DATABASE_URL only in a separate one-off owner/migration job, not t
 3. In private psql as owner: `CREATE ROLE shopora_app LOGIN;`, then `\password shopora_app` to set a strong password interactively. Apply `database/app-role-grants.sql`. Keep this role non-superuser, without schema creation or role-management permissions. The database owner/migration role owns the tables.
 4. Set the web DATABASE_URL to this role. If using Railway variable references, define a private APP_DATABASE_URL with that role and reference it from the web service. Do not simply give the web process the template's owner connection.
 5. Follow database/MIGRATION.md for real users, carts, orders, bank details and photos. Reconcile row counts, UUID relationships and order totals. Import defaults to a rollback-only rehearsal; only --apply commits.
-6. Start the web service. `/api/health` returns 200 only when flqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqags, core configuration and auth/catalog tables are reachable. It deliberately does not verify email inbox delivery or Google credentials.
+6. Start the web service. `/api/health` returns 200 only when flags, core configuration and auth/catalog tables are reachable. It deliberately does not verify email inbox delivery or Google credentials.
 
 Initial health checks will fail until the database schema, role grants and required variables are ready. Use the one-off maintenance job first. Keep production and staging databases/keys separate. Use the same app origin for browser requests and generated email links.
 
