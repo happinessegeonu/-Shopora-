@@ -1,0 +1,15 @@
+node_modules
+.next
+.git
+.env*
+!.env.example
+mobile-expo
+mobile-android
+reference
+private-migration
+artifacts
+*.jpg
+*.jpeg
+*.png
+!public/**
+*.tsbuildinfo

@@ -5,7 +5,7 @@ import "./auth.css";
 import "./marketplace.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://shopora-amber.vercel.app"),
+  metadataBase: new URL(process.env.AUTH_APP_ORIGIN || "https://maketechlimited.com"),
   title: "Shopora | Your Everyday Marketplace in Nigeria",
   description: "Discover everyday finds and sell on Shopora in Nigeria. Foodstuff, grocery, fashion, beauty, tech, and home sellers are welcome to submit products for review.",
   openGraph: {
@@ -18,6 +18,6 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const website = { "@context": "https://schema.org", "@type": "WebSite", name: "Shopora", url: "https://shopora-amber.vercel.app/" };
+  const website = { "@context": "https://schema.org", "@type": "WebSite", name: "Shopora", url: `${process.env.AUTH_APP_ORIGIN || "https://maketechlimited.com"}/` };
   return <html lang="en"><body><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(website).replace(/</g, "\\u003c") }} />{children}</body></html>;
 }

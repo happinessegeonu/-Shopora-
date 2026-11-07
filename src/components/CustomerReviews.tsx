@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { storeRead, storeWrite, storeUser } from "@/lib/store-client";
 
 type Review = { id: string; display_name: string; rating: number; body: string };
 
@@ -13,12 +13,9 @@ export function CustomerReviews() {
   const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
-    const client = createClient();
-    if (!client) { setLoadError(true); return; }
-    void client.from("reviews").select("id,display_name,rating,body").eq("approved", true).order("created_at", { ascending: false }).limit(12).then(({ data, error }) => {
-      if (error) setLoadError(true);
-      else setReviews(data ?? []);
-    });
+    let active = true;
+    void storeRead("reviews").then(data => { if (active) setReviews(data ?? []); }).catch(() => { if (active) setLoadError(true); });
+    return () => { active = false; };
   }, []);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
@@ -30,12 +27,9 @@ export function CustomerReviews() {
     if (!name || body.length < 10) { setMessage("Please add your name and at least 10 characters about your experience."); return; }
     setBusy(true); setMessage("");
     try {
-      const client = createClient();
-      if (!client) throw new Error("Reviews are temporarily unavailable. Please try again later.");
-      const { data, error: authError } = await client.auth.getUser();
-      if (authError || !data.user) { setMessage("Please sign in using the account button above, then submit your review."); return; }
-      const { error } = await client.from("reviews").insert({ customer_id: data.user.id, display_name: name, rating, body });
-      if (error) throw new Error("We couldn’t save your review. Please try again later.");
+      const user = await storeUser();
+      if (!user) { setMessage("Please sign in using the account button above, then submit your review."); return; }
+      await storeWrite("reviews", { customer_id: user.id, display_name: name, rating, body });
       form.reset(); setRating(5);
       setMessage("Thank you! Your review has been submitted and will appear once approved.");
     } catch (error) {

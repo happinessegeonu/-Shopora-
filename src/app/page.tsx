@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { storeCatalog, watchUser, storeLogout } from "@/lib/store-client";
 import { demoProducts, formatPrice, type Product } from "@/lib/catalog";
 
 import { AccountDialog } from "@/components/AccountDialog";
@@ -33,14 +33,13 @@ export default function HomePage() {
       setAuthOpen(true);
       setAuthMessage(new URLSearchParams(location.search).has("reset") ? "This reset link has expired or could not be opened. Request a new email below and open its link in this same browser." : "We couldn’t complete sign-in. Please try again or use your email and password.");
     }
-    const supabase = createClient();
-    if (!supabase) return;
-    void supabase.from("products").select("id,name,description,price_minor,category,image_url,badge,color").eq("active", true).order("created_at", { ascending: false }).then(({ data }) => {
-      if (data?.length) setProducts(data.map((p) => ({ id: p.id, name: p.name, description: p.description || "", price_minor: p.price_minor, category: p.category || "Everything", image: p.image_url || "✳", badge: p.badge || undefined, color: p.color || "sand" })));
-    });
-    void supabase.auth.getUser().then(({ data }) => setSessionEmail(data.user?.email ?? null));
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => setSessionEmail(session?.user.email ?? null));
-    return () => listener.subscription.unsubscribe();
+    let active = true;
+    void storeCatalog().then(({ products: data }) => {
+      if (!active) return;
+      if (data?.length) setProducts(data.map((p: { id: string; name: string; description: string; price_minor: number; category: string; image_url: string; badge?: string; color: string }) => ({ id: p.id, name: p.name, description: p.description || "", price_minor: p.price_minor, category: p.category || "Everything", image: p.image_url || "✳", badge: p.badge || undefined, color: p.color || "sand" })));
+    }).catch(() => setMessage("The catalogue could not refresh. Please reconnect before ordering."));
+    const stop = watchUser(user => setSessionEmail(user?.email ?? null));
+    return () => { active = false; stop(); };
   }, []);
 
   const categories = useMemo(() => ["Everything", ...Array.from(new Set(products.map((p) => p.category)))], [products]);
@@ -58,8 +57,7 @@ export default function HomePage() {
     if (product) changeCart(product, delta);
   }
   async function signOut() {
-    const supabase = createClient();
-    if (supabase) await supabase.auth.signOut();
+    await storeLogout();
     setSessionEmail(null); setAuthOpen(false);
   }
   async function submitOrder(event: React.FormEvent<HTMLFormElement>) {

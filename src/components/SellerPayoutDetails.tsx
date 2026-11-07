@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { storeRead, storeWrite } from "@/lib/store-client";
 
 export function SellerPayoutDetails({ sellerId }: { sellerId: string }) {
  const [bank, setBank] = useState("");
@@ -14,10 +14,7 @@ export function SellerPayoutDetails({ sellerId }: { sellerId: string }) {
   let active = true;
   async function load() {
    try {
-    const client = createClient();
-    if (!client) throw new Error();
-    const { data, error } = await client.from("seller_payout_accounts").select("bank_name,account_name,account_number").eq("seller_id", sellerId).maybeSingle();
-    if (error) throw error;
+    const data = await storeRead("payouts", sellerId);
     if (!active) return;
     setBank(data?.bank_name ?? ""); setName(data?.account_name ?? ""); setNumber(data?.account_number ?? ""); setReady(true);
    } catch { if (active) setMessage("We couldn’t load payout details. Refresh to try again."); }
@@ -32,10 +29,7 @@ export function SellerPayoutDetails({ sellerId }: { sellerId: string }) {
   if (!/^\d{10}$/.test(number) || bank.trim().length < 2 || name.trim().length < 2) { setMessage("Enter a bank, account name, and a 10-digit Nigerian account number."); return; }
   setBusy(true); setMessage("");
   try {
-   const client = createClient();
-   if (!client) throw new Error();
-   const { error } = await client.from("seller_payout_accounts").upsert({ seller_id: sellerId, bank_name: bank.trim(), account_name: name.trim(), account_number: number }, { onConflict: "seller_id" });
-   if (error) throw error;
+   await storeWrite("payouts", { seller_id: sellerId, bank_name: bank.trim(), account_name: name.trim(), account_number: number });
    setMessage("Payout details saved. Shopora must verify them before making a manual payout.");
   } catch { setMessage("Your payout details weren’t saved. Please try again."); }
   finally { setBusy(false); }

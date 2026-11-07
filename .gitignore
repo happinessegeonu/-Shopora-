@@ -18,3 +18,6 @@ reference/website-images/
 
 reference/eas-archive-check/
 reference/eas-archive-verified/
+private-migration/
+artifacts/
+*.tsbuildinfo

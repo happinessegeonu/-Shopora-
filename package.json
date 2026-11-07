@@ -4,21 +4,33 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test --test-concurrency=1 tests/*.test.ts tests/*.test.cjs",
+    "test:owned-auth": "node --import tsx --test tests/owned-auth.test.ts",
+    "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate.mjs",
+    "db:cleanup": "node --env-file-if-exists=.env.local scripts/cleanup.mjs",
+    "package:handoff": "node scripts/package-handoff.mjs"
   },
+  "engines": { "node": ">=22.18.0 <25" },
   "dependencies": {
-    "@supabase/ssr": "^0.5.2",
-    "@supabase/supabase-js": "^2.49.1",
-    "next": "^14.2.24",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "google-auth-library": "11.3.3",
+    "next": "16.4.5",
+    "pg": "8.16.3",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.3.14",
     "@types/node": "^22.13.10",
-    "@types/react": "^18.3.18",
-    "@types/react-dom": "^18.3.5",
+    "@types/pg": "8.15.6",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "eslint": "9.39.1",
+    "eslint-config-next": "16.4.5",
+    "tsx": "4.20.6",
     "typescript": "^5.8.2"
   }
 }
