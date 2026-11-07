@@ -21,3 +21,8 @@ reference/eas-archive-verified/
 private-migration/
 artifacts/
 *.tsbuildinfo
+.shopora-preview/
+.next-preview/
+.next-preview-e2e/
+test-results/
+playwright-report/

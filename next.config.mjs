@@ -2,6 +2,7 @@
 const nextConfig = {
   poweredByHeader: false,
   output: "standalone",
+  distDir: process.env.SHOPORA_PREVIEW === "true" ? (process.env.SHOPORA_PREVIEW_BUILD_DIR === ".next-preview-e2e" ? ".next-preview-e2e" : ".next-preview") : ".next",
   async redirects() { return [{ source: "/:path*", has: [{ type: "host", value: "www.maketechlimited.com" }], destination: "https://maketechlimited.com/:path*", permanent: true }]; },
   async headers() {
     return [{ source: "/:path*", headers: [

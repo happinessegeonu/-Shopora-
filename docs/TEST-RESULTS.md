@@ -1,5 +1,7 @@
 # Test results — 7 November 2026 (Africa/Lagos)
 
+This is the earlier authentication handoff baseline. See [the website review report](REVIEW-TEST-RESULTS.md) for browser evidence and [the isolated preview guide](TEST-PREVIEW.md) to test it yourself.
+
 Website-only handoff. No production deployment, DNS change, real account migration or real email was performed. Tests use synthetic records and isolated PGlite PostgreSQL databases. Route-handler tests execute the actual handlers and SQL/services with the database/session adapters supplied by the test fixture; they are not a complete real-browser or hosted-network authentication demonstration.
 
 ## Passed

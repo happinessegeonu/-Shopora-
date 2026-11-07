@@ -8,7 +8,7 @@ try {
   await db.query("select pg_advisory_lock(734820941)");
   await db.query("create table if not exists shopora_migrations(name text primary key, checksum text not null, applied_at timestamptz not null default now())");
   await db.query("revoke all on shopora_migrations from public");
-  for (const name of ["owned-auth.sql", "shopora.sql", "operations.sql"]) {
+  for (const name of ["owned-auth.sql", "shopora.sql", "operations.sql", "checkout-requests.sql"]) {
     const sql = await readFile(new URL(`../database/${name}`, import.meta.url), "utf8");
     const checksum = createHash("sha256").update(sql).digest("hex");
     const previous = (await db.query("select checksum from shopora_migrations where name=$1", [name])).rows[0];

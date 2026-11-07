@@ -16,20 +16,23 @@ export default function OwnedAccountPage() {
   useEffect(() => {
     if (new URLSearchParams(location.search).get("mode") === "forgot") setMode("forgot");
     if (new URLSearchParams(location.search).has("legacy")) setMessage("Your old sign-in link has been retired. Request a new password link for your existing account.");
-    const fragment = new URLSearchParams(location.hash.slice(1));
-    const purpose = fragment.get("purpose");
-    if (purpose === "verify" || purpose === "reset") {
-      token.current = fragment.get("token") || "";
-      setMode(purpose);
-      history.replaceState(null, "", location.pathname);
-    }
+    const readLink = () => {
+      const fragment = new URLSearchParams(location.hash.slice(1));
+      const purpose = fragment.get("purpose");
+      if (purpose === "verify" || purpose === "reset") {
+        token.current = fragment.get("token") || "";
+        setMode(purpose); setMessage("");
+        history.replaceState(history.state, "", location.pathname + location.search);
+      }
+    };
+    readLink(); window.addEventListener("hashchange", readLink);
     let active = true;
     fetch("/api/owned-auth/session", { cache: "no-store" }).then(async response => {
       const result = await response.json();
       if (active) { if (!response.ok) throw new Error(result.error); setUser(result.user); }
     }).catch(() => { if (active) setMessage("Account service is unavailable. Please try again later."); })
       .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
+    return () => { active = false; window.removeEventListener("hashchange", readLink); };
   }, []);
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -57,7 +60,7 @@ export default function OwnedAccountPage() {
     <Link href="/">← Shopora</Link>
     <h1 style={{ margin: "24px 0" }}>{completing ? "Choose your password" : user ? "Your account" : mode === "register" ? "Create an account" : mode === "forgot" ? "Reset your password" : "Welcome back"}</h1>
     {loading ? <p>Loading your account…</p> : <>
-      {user && !completing && <p>Signed in as {user.email}</p>}
+      {user && !completing && <><p>Signed in as {user.email}</p><p><Link href="/orders">Your orders</Link> · <Link href="/sell">Seller space</Link> · <Link href="/#shop">Keep shopping</Link></p></>}
       {mode === "register" && <p>We’ll email you a link to verify your address and choose your password.</p>}
       <form className="email-auth-form" onSubmit={submit}>
         {(!user || completing) && <>

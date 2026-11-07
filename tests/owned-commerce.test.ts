@@ -11,7 +11,7 @@ import { OwnedAuth } from "../src/lib/owned-auth/service";
 import { commerceTables, importSnapshot, mappedRow } from "../scripts/migration-data.mjs";
 async function fixture() {
  const pg = new PGlite();
- for (const name of ["owned-auth.sql","shopora.sql","operations.sql"]) await pg.exec(readFileSync(`database/${name}`,"utf8"));
+ for (const name of ["owned-auth.sql","shopora.sql","operations.sql","checkout-requests.sql"]) await pg.exec(readFileSync(`database/${name}`,"utf8"));
  const adapter = (connection: any): Database => ({ query: (sql,values) => connection.query(sql,values), transaction: work => connection.transaction((tx: any) => work(adapter(tx))) });
  return { pg, db: adapter(pg) };
 }
@@ -26,7 +26,9 @@ test("cart ownership, authoritative checkout totals, stock, commission and rollb
   await changeCart(alice,product,2,db); await changeCart(bob,product,1,db);
   assert.equal((await readCart(alice,db))[0].quantity,2); assert.equal((await readCart(bob,db))[0].quantity,1);
   const details=validateCheckout({email:'alice@example.com',senderName:'Alice',senderPhone:'08012345678',receiverName:'Alice',receiverPhone:'08012345678',location:'Ikeja',state:'Lagos',address:'Test address',items:[{productId:product,quantity:2,price:1}],totalMinor:1,customer_id:bob});
-  const order=await createOrder(details,alice,db);
+  const key=randomUUID();const order=await createOrder(details,alice,db,key);
+  const replay=await createOrder(details,alice,db,key);assert.equal(replay.orderNumber,order.orderNumber);assert.equal(replay.replayed,true);
+  await assert.rejects(createOrder(details,bob,db,key),/different order/);
   assert.equal(order.subtotalMinor,4000000); assert.equal(order.totalMinor,4500000);
   assert.equal((await readCart(alice,db)).length,0); assert.equal((await readCart(bob,db))[0].quantity,1);
   const saved=(await pg.query<{customer_id:string}>("select customer_id from shopora_orders")).rows[0]; assert.equal(saved.customer_id,alice);

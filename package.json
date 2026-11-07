@@ -12,9 +12,14 @@
     "test:owned-auth": "node --import tsx --test tests/owned-auth.test.ts",
     "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate.mjs",
     "db:cleanup": "node --env-file-if-exists=.env.local scripts/cleanup.mjs",
-    "package:handoff": "node scripts/package-handoff.mjs"
+    "package:handoff": "node scripts/package-handoff.mjs",
+    "preview": "node --import tsx scripts/preview.mjs",
+    "preview:public": "node --import tsx scripts/preview.mjs --public",
+    "test:browser": "node --import tsx scripts/run-browser-tests.mjs"
   },
-  "engines": { "node": ">=22.18.0 <25" },
+  "engines": {
+    "node": ">=22.18.0 <25"
+  },
   "dependencies": {
     "google-auth-library": "11.3.3",
     "next": "16.4.5",
@@ -23,7 +28,9 @@
     "react-dom": "19.3.1"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "0.3.14",
+    "@electric-sql/pglite": "0.5.15",
+    "@electric-sql/pglite-socket": "0.2.18",
+    "@playwright/test": "1.65.0",
     "@types/node": "^22.13.10",
     "@types/pg": "8.15.6",
     "@types/react": "19.3.0",

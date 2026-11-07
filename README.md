@@ -1,8 +1,8 @@
 # Shopora website — owned authentication handoff
 
-This is the website-only handoff for DevOps on the `codex/standalone-backend` branch of the existing Shopora repository. It runs Shopora authentication in the Next.js backend and stores accounts and commerce data in ordinary PostgreSQL. No Supabase SDK, Neon account or paid authentication provider is required. No deployment or DNS change has been made.
+This is the website-only review branch `codex/website-review-preview` of the existing Shopora repository. It runs Shopora authentication in the Next.js backend and stores accounts and commerce data in ordinary PostgreSQL. No Supabase SDK, Neon account or paid authentication provider is required. No production deployment or DNS change has been made.
 
-Start with [Railway deployment](docs/RAILWAY.md), [authentication](docs/OWNED-AUTH.md), [data migration](database/MIGRATION.md), and [test results](docs/TEST-RESULTS.md).
+Start with [try the isolated test shop](docs/TEST-PREVIEW.md) and [the review test report](docs/REVIEW-TEST-RESULTS.md). After review, use [Railway deployment](docs/RAILWAY.md), [authentication](docs/OWNED-AUTH.md) and [data migration](database/MIGRATION.md).
 
 ## Included
 
@@ -14,7 +14,7 @@ Start with [Railway deployment](docs/RAILWAY.md), [authentication](docs/OWNED-AU
 - PostgreSQL schema migrations, limited runtime-role grants, controlled legacy export/import and seller-photo migration tools.
 - Dockerfile, Railway configuration, local PostgreSQL Compose file, environment template and tests.
 
-Native mobile code/APKs are excluded from this handoff. The existing `/app` route is the responsive browser/PWA storefront, not a new native app.
+The native mobile app is outside this review and is unchanged. The existing `/app` route is the responsive browser/PWA storefront, not a new native app.
 
 ## Local development
 

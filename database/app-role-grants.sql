@@ -11,5 +11,6 @@ grant select,insert,update,delete on shopora_cart_items to shopora_app;
 grant select,insert on shopora_orders,shopora_order_items,shopora_seller_commissions,
  shopora_reviews,shopora_media,shopora_seller_listings to shopora_app;
 grant select,insert,update on shopora_seller_payout_accounts to shopora_app;
+grant select,insert on shopora_checkout_requests to shopora_app;
 -- No migration-table, commission-report, review-approval, order-status or payout
 -- settlement grants. Administrators use a separate private operations role.

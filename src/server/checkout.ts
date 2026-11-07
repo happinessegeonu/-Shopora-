@@ -1,6 +1,7 @@
 import { database } from "./postgres";
 import type { Database } from "@/lib/owned-auth/database";
 import { StoreError } from "./request-security";
+import { createHash } from "node:crypto";
 
 type Item = { productId: string; quantity: number };
 export type Checkout = { email: string; senderName: string; senderPhone: string; receiverName: string; receiverPhone: string; location: string; state: string; address: string; items: Item[] };
@@ -18,8 +19,17 @@ export function validateCheckout(value: unknown): Checkout {
   }
   return result;
 }
-export async function createOrder(details: Checkout, userId: string | null, db: Database = database()) {
+export async function createOrder(details: Checkout, userId: string | null, db: Database = database(), requestKey?: string) {
+ const hash = requestKey ? createHash("sha256").update(JSON.stringify(details)).digest("hex") : null;
  return db.transaction(async client => {
+  if(requestKey) {
+    await client.query("select pg_advisory_xact_lock(hashtextextended($1,0))", [`checkout:${requestKey}`]);
+    const previous=(await client.query(`select r.customer_id,r.request_hash,o.order_number,o.subtotal_minor,o.shipping_minor,o.total_minor from shopora_checkout_requests r join shopora_orders o on o.id=r.order_id where r.request_key=$1`,[requestKey])).rows[0];
+    if(previous){
+      if(previous.customer_id!==userId||previous.request_hash!==hash)throw new StoreError("This checkout was already used for a different order. Start a new checkout.",409);
+      return {orderNumber:String(previous.order_number),subtotalMinor:Number(previous.subtotal_minor),shippingMinor:Number(previous.shipping_minor),totalMinor:Number(previous.total_minor),items:[],replayed:true};
+    }
+  }
   // The same per-customer lock serializes checkout with concurrent cart mutations.
   if(userId) await client.query("select pg_advisory_xact_lock(hashtextextended($1,0))",[userId]);
   const shipping=await client.query("select fee_minor from shopora_shipping_rates where lower(state)=lower($1) and active=true for share",[details.state]);
@@ -46,6 +56,7 @@ export async function createOrder(details: Checkout, userId: string | null, db: 
     }
     if(userId) await client.query("update shopora_cart_items set quantity=greatest(0,quantity-$3),updated_at=now() where user_id=$1 and product_id=$2",[userId,line.productId,line.quantity]);
   }
-  return {orderNumber:saved.rows[0].order_number as string,subtotalMinor:subtotal,shippingMinor,totalMinor:total,items:lines.map(line=>({name:line.name,quantity:line.quantity,line_total:line.line_total}))};
+  if(requestKey) await client.query("insert into shopora_checkout_requests(request_key,customer_id,request_hash,order_id) values($1,$2,$3,$4)",[requestKey,userId,hash,saved.rows[0].id]);
+  return {orderNumber:saved.rows[0].order_number as string,subtotalMinor:subtotal,shippingMinor,totalMinor:total,items:lines.map(line=>({name:line.name,quantity:line.quantity,line_total:line.line_total})),replayed:false};
  });
 }

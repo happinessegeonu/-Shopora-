@@ -3,6 +3,7 @@ import "./globals.css";
 import "./checkout.css";
 import "./auth.css";
 import "./marketplace.css";
+import { RuntimeNotice } from "@/components/RuntimeNotice";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.AUTH_APP_ORIGIN || "https://maketechlimited.com"),
@@ -19,5 +20,5 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const website = { "@context": "https://schema.org", "@type": "WebSite", name: "Shopora", url: `${process.env.AUTH_APP_ORIGIN || "https://maketechlimited.com"}/` };
-  return <html lang="en"><body><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(website).replace(/</g, "\\u003c") }} />{children}</body></html>;
+  return <html lang="en"><body><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(website).replace(/</g, "\\u003c") }} /><RuntimeNotice>{children}</RuntimeNotice></body></html>;
 }

@@ -13,3 +13,8 @@ artifacts
 *.png
 !public/**
 *.tsbuildinfo
+.shopora-preview
+.next-preview
+.next-preview-e2e
+test-results
+playwright-report

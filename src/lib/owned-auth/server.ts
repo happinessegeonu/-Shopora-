@@ -6,6 +6,11 @@ import { appOrigin } from "./http";
 export function ownedAuth() {
   if (process.env.OWNED_AUTH_ENABLED !== "true") throw new Error("Owned authentication is not enabled.");
   return new OwnedAuth(authDatabase(), async (email, purpose, token) => {
+    if (process.env.SHOPORA_PREVIEW === "true") {
+      const { capturePreviewMail } = await import("@/server/preview-mail");
+      await capturePreviewMail(email, purpose === "verify" ? "Verify your test account" : "Reset your test password", `TEST ONLY. This email was not sent to a real inbox.\n\n${appOrigin()}/account#${new URLSearchParams({ purpose, token })}\n\nThe link expires in 30 minutes. Use fictional details only.`);
+      return;
+    }
     const { MAILGUN_API_KEY: key, MAILGUN_DOMAIN: domain, MAILGUN_FROM_EMAIL: from } = process.env;
     if (!key || !domain || !from) throw new Error("Email delivery is not configured.");
     // Fragments keep bearer secrets out of request URLs, access logs and referrers.

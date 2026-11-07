@@ -3,7 +3,8 @@ export function appOrigin() {
   const value = process.env.AUTH_APP_ORIGIN;
   if (!value) throw new Error("AUTH_APP_ORIGIN is required.");
   const url = new URL(value);
-  if (url.origin !== value || (url.protocol !== "https:" && !(process.env.NODE_ENV !== "production" && url.hostname === "localhost"))) throw new Error("Use an exact HTTPS origin (localhost HTTP is allowed in development).");
+  const localPreview = process.env.SHOPORA_PREVIEW === "true" && ["localhost", "127.0.0.1"].includes(url.hostname);
+  if (url.origin !== value || (url.protocol !== "https:" && !localPreview && !(process.env.NODE_ENV !== "production" && url.hostname === "localhost"))) throw new Error("Use an exact HTTPS origin (localhost HTTP is allowed in development).");
   return url.origin;
 }
 export function checkOrigin(request: Request) {

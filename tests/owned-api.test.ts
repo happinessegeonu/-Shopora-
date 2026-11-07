@@ -11,6 +11,7 @@ import { StoreError, requireSameOriginMutation } from "../src/server/request-sec
 import { changeCart, readCart } from "../src/server/cart";
 import { createOrder, validateCheckout } from "../src/server/checkout";
 import type { Database } from "../src/lib/owned-auth/database";
+import { isPreviewEmail } from "../src/lib/preview-mode";
 const require = createRequire(import.meta.url);
 function route(path: string, modules: Record<string, unknown>) {
  const sandbox = { exports: {}, require: (name:string) => { if (!(name in modules)) throw new Error(`Unmocked dependency ${name}`); return modules[name]; }, Error, Response, Request, Headers, Buffer, Uint8Array, console, process, URL };
@@ -31,6 +32,7 @@ test("actual route handlers use opaque sessions, secure cookies and isolate sell
   '@/lib/owned-auth/server':{ownedAuth:()=>auth,requestOwnedToken:async(request:Request)=>token(request)},
   '@/lib/owned-auth/service':{AuthError,COOKIE_NAME:'shopora_session',SESSION_SECONDS:604800},
   '@/lib/owned-auth/http':{checkOrigin,readBody},
+  '@/lib/preview-mode':{isPreviewEmail},
   '@/server/auth':{requestUser:async(request:Request)=>auth.session(token(request))},
   '@/server/postgres':{database:()=>db},'@/server/request-security':{StoreError,requireSameOriginMutation},
   '@/server/cart':{readCart:(id:string)=>readCart(id,db),changeCart:(id:string,p:string,d:number)=>changeCart(id,p,d,db)},

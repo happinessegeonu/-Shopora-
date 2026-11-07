@@ -1,6 +1,6 @@
 # Railway and maketechlimited.com deployment handoff
 
-DevOps owns deployment. No Railway project, database, domain record or live application was changed by this work. The ZIP contains website source and synthetic tests, not production secrets or customer exports.
+DevOps owns deployment. No Railway project, production database, domain record or live application was changed by this work. This branch contains website source and synthetic tests, not production secrets or customer exports.
 
 ## Services and costs
 
@@ -15,7 +15,7 @@ Start with web memory headroom of at least 1 GiB for bounded scrypt work; measur
 
 ## Build and secrets
 
-Use the existing repository `https://github.com/happinessegeonu/-Shopora-` and select the handoff branch `codex/standalone-backend`. Review it before merging into a branch that deploys automatically. Select the repository root, not a mobile directory. `railway.json` selects the Dockerfile and `/api/health`. Docker builds require no database credentials. The image runs as a non-root user and starts `node server.js`. If using source/Railpack instead, build with `npm ci && npm run build`, start with `npm start -- --hostname 0.0.0.0`, and ensure PORT is set by Railway.
+Use the existing repository `https://github.com/happinessegeonu/-Shopora-` and review `codex/website-review-preview` before merging into a branch that deploys automatically. Select the repository root, not a mobile directory. `railway.json` selects the Dockerfile and `/api/health`. Docker builds require no database credentials. The image runs as a non-root user and starts `node server.js`. If using source/Railpack instead, build with `npm ci && npm run build`, start with `npm start -- --hostname 0.0.0.0`, and ensure PORT is set by Railway. **Do not enable SHOPORA_PREVIEW in Railway production**; the local preview data, inbox, feedback, and access code are development-only.
 
 Set these web-service environment variables privately:
 
@@ -42,7 +42,7 @@ Use MIGRATION_DATABASE_URL only in a separate one-off owner/migration job, not t
 ## Database initialization and privileges
 
 1. Back up the old database and storage before making changes; rehearse on an isolated target.
-2. Build the image, then run a maintenance job inside the Railway environment with an owner-level MIGRATION_DATABASE_URL: `node scripts/migrate.mjs`. This creates/checks checksum-tracked migrations in order: owned-auth.sql, shopora.sql, operations.sql. It uses an advisory migration lock and transactional DDL. No migrations run automatically when the web service starts.
+2. Build the image, then run a maintenance job inside the Railway environment with an owner-level MIGRATION_DATABASE_URL: `node scripts/migrate.mjs`. This creates/checks checksum-tracked migrations in order: owned-auth.sql, shopora.sql, operations.sql, checkout-requests.sql. It uses an advisory migration lock and transactional DDL. Existing databases must apply the new checkout migration before starting this revision; health checks now require it. No migrations run automatically when the web service starts.
 3. In private psql as owner: `CREATE ROLE shopora_app LOGIN;`, then `\password shopora_app` to set a strong password interactively. Apply `database/app-role-grants.sql`. Keep this role non-superuser, without schema creation or role-management permissions. The database owner/migration role owns the tables.
 4. Set the web DATABASE_URL to this role. If using Railway variable references, define a private APP_DATABASE_URL with that role and reference it from the web service. Do not simply give the web process the template's owner connection.
 5. Follow database/MIGRATION.md for real users, carts, orders, bank details and photos. Reconcile row counts, UUID relationships and order totals. Import defaults to a rollback-only rehearsal; only --apply commits.

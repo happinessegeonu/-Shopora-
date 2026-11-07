@@ -1,44 +1,63 @@
 "use client";
+import { useRef, useState } from "react";
 import { ProductImage } from "@/components/ProductImage";
-
-import { useState } from "react";
+import { useRuntime } from "@/components/RuntimeNotice";
 import { formatPrice } from "@/lib/catalog";
 import { bankTransfer } from "@/lib/payment";
 import { useShippingRates } from "@/lib/shipping";
 import { useCart } from "@/lib/use-cart";
-
-
+type Receipt = { orderNumber: string; subtotalMinor: number; shippingMinor: number; totalMinor: number; emailSent: boolean; cartCleared: boolean; simulated: boolean; replayed: boolean };
 export default function CheckoutPage() {
+  const { preview } = useRuntime();
   const { cart, cartError, cartReady, syncStatus, clearPurchased } = useCart();
-  const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState("");
-  const [placed, setPlaced] = useState(false);
-  const [orderNumber, setOrderNumber] = useState("");
-  const [placedTotal, setPlacedTotal] = useState(0);
-  const [placedSubtotal, setPlacedSubtotal] = useState(0);
-  const [placedShipping, setPlacedShipping] = useState(0);
-  const [deliveryState, setDeliveryState] = useState("");
-  const shipping = useShippingRates();
-  const total = cart.reduce((sum, line) => sum + line.product.price_minor * line.quantity, 0);
-  const shippingRate = shipping.rates.find((rate) => rate.state === deliveryState);
-  const shippingFee = shippingRate?.fee_minor ?? null;
-  const orderTotal = shippingFee === null ? null : total + shippingFee;
-
-  async function placeOrder(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!cartReady) { setNotice("Wait for your cart to load."); return; } if (!cart.length) { setNotice("Your bag is empty. Head back to the shop to find something lovely."); return; }
-    if (!shippingRate) { setNotice("Please select your delivery state to calculate shipping."); return; }
-    setBusy(true); setNotice("");
-    const fields = new FormData(event.currentTarget);
-    try {
-      const response = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ senderName: fields.get("senderName"), senderPhone: fields.get("senderPhone"), email: fields.get("email"), receiverName: fields.get("receiverName"), receiverPhone: fields.get("receiverPhone"), location: fields.get("location"), state: fields.get("state"), address: fields.get("address"), items: cart.map((line) => ({ productId: line.product.id, quantity: line.quantity })) }) });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "We couldn’t place your order.");
-      await clearPurchased(cart, result.cartCleared); setPlacedTotal(result.totalMinor); setPlacedSubtotal(result.subtotalMinor); setPlacedShipping(result.shippingMinor); setPlaced(true); setOrderNumber(result.orderNumber);
-      setNotice(result.emailSent ? `Order ${result.orderNumber} received. A confirmation is on its way. Your total includes shipping.` : `Order ${result.orderNumber} received. We couldn’t send the confirmation email yet. Your total includes shipping; please keep your order number.`);
-    } catch (error) { setNotice(error instanceof Error ? error.message : "Something went wrong. Please try again."); }
-    finally { setBusy(false); }
+  const [busy,setBusy]=useState(false),[notice,setNotice]=useState(""),[receipt,setReceipt]=useState<Receipt|null>(null),[deliveryState,setDeliveryState]=useState("");
+  const [sameReceiver,setSameReceiver]=useState(false);
+  const lock=useRef(false), attempt=useRef<{body:string;key:string}|null>(null);
+  const shipping=useShippingRates();
+  const total=cart.reduce((sum,line)=>sum+line.product.price_minor*line.quantity,0);
+  const rate=shipping.rates.find(item=>item.state===deliveryState);
+  async function placeOrder(event:React.FormEvent<HTMLFormElement>){
+    event.preventDefault();if(lock.current)return;
+    if(!cartReady||!cart.length||!rate){setNotice("Wait for your bag and select a delivery state before ordering.");return;}
+    const data=new FormData(event.currentTarget),senderName=data.get("senderName"),senderPhone=data.get("senderPhone");
+    const body=JSON.stringify({senderName,senderPhone,email:data.get("email"),receiverName:sameReceiver?senderName:data.get("receiverName"),receiverPhone:sameReceiver?senderPhone:data.get("receiverPhone"),location:data.get("location"),state:data.get("state"),address:data.get("address"),items:cart.map(line=>({productId:line.product.id,quantity:line.quantity}))});
+    if(attempt.current?.body!==body)attempt.current={body,key:crypto.randomUUID()};
+    lock.current=true;setBusy(true);setNotice("");
+    try{
+      const response=await fetch("/api/orders",{method:"POST",headers:{"content-type":"application/json","idempotency-key":attempt.current.key},body});
+      const result=await response.json().catch(()=>null);
+      if(!response.ok||!result)throw new Error(result?.error||"Could not confirm checkout. Retry without changing the order, or check Your orders first.");
+      setReceipt(result);await clearPurchased(cart,result.cartCleared);
+      setNotice(result.simulated?`Test order ${result.orderNumber} saved. No payment was taken. See the simulated test inbox.`:result.replayed?`Order ${result.orderNumber} was already received. Keep this reference.`:result.emailSent?`Order ${result.orderNumber} received. A confirmation is on its way.`:`Order ${result.orderNumber} received. The confirmation email could not be sent yet. Keep this reference.`);
+    }catch(error){setNotice(error instanceof TypeError?"Connection interrupted. Retry without changing the order, or check Your orders first.":error instanceof Error?error.message:"Please try again.");}
+    finally{lock.current=false;setBusy(false);}
   }
-
-  return <main className="checkout-page"><header className="checkout-header wrap"><a className="brand" href="/">shopora<span>✳</span></a><a className="back-link checkout-back" href="/#shop">← Back to shopping</a></header><div className="checkout-layout wrap"><section className="checkout-main"><p className="eyebrow">THE LAST LITTLE STEP</p><h1>Almost <em>yours.</em></h1><p role="status">{cartError || syncStatus}</p><p className="checkout-intro">Leave us the details and we’ll take good care of the rest.</p>{notice && <div className={placed ? "order-notice success" : "order-notice"} role="status">{notice}</div>}{placed ? <><section className="bank-transfer"><p className="eyebrow">BANK TRANSFER DETAILS</p><h2>Payment instructions</h2><dl><div><dt>Items subtotal</dt><dd>{formatPrice(placedSubtotal)}</dd></div><div><dt>Shipping</dt><dd>{formatPrice(placedShipping)}</dd></div><div><dt>Total to transfer</dt><dd>{formatPrice(placedTotal)}</dd></div><div><dt>Bank</dt><dd>{bankTransfer.bank}</dd></div><div><dt>Account name</dt><dd>{bankTransfer.accountName}</dd></div><div><dt>Account number</dt><dd>{bankTransfer.accountNumber}</dd></div></dl><p className="transfer-reference">Use <strong>{orderNumber}</strong> as the transfer narration so we can match your payment.</p><p className="checkout-terms">Transfer the total shown above, including shipping. Your order stays pending until payment is received and confirmed.</p></section><a className="pill-button dark" href="/">Back to the good things <span>↗</span></a></> : <form className="checkout-form page-form" onSubmit={placeOrder}><div className="checkout-section-title"><h2>Sender details</h2><span>Your contact information</span></div><div className="checkout-field-row"><label>Sender’s full name<input name="senderName" required autoComplete="name" placeholder="Your full name" /></label><label>Sender’s phone<input name="senderPhone" type="tel" required autoComplete="tel" placeholder="Phone or WhatsApp number" /></label></div><label>Email for order updates<input name="email" type="email" required autoComplete="email" placeholder="you@example.com" /></label><div className="checkout-section-title"><h2>Who should receive it?</h2><span>Delivery details</span></div><div className="checkout-field-row"><label>Receiver’s full name<input name="receiverName" required autoComplete="shipping name" placeholder="Receiver’s full name" /></label><label>Receiver’s phone<input name="receiverPhone" type="tel" required autoComplete="shipping tel" placeholder="Phone or WhatsApp number" /></label></div><div className="checkout-field-row"><label>City or town<input name="location" required autoComplete="address-level2" placeholder="City or town" /></label><label>Delivery state<select name="state" required autoComplete="shipping address-level1" value={deliveryState} onChange={(event) => setDeliveryState(event.target.value)} disabled={shipping.loading || shipping.rates.length === 0}><option value="">{shipping.loading ? "Loading delivery options…" : "Select your state"}</option>{shipping.rates.map((rate) => <option key={rate.state} value={rate.state}>{rate.state}</option>)}</select></label></div><label>Delivery street address<textarea name="address" required autoComplete="street-address" placeholder="House number, street, area, nearby landmark" rows={3} /></label><p className="delivery-estimate"><strong>Delivery estimate: 3–4 days</strong><span>We’ll contact you if your area needs extra time. Shipping is included in your order total below.</span></p><div className="checkout-section-title"><h2>Payment</h2><span>Bank transfer</span></div><p className="pending-note">After placing your order, we’ll show the transfer account and send your order details to your email.</p><button className="pill-button dark full" disabled={busy || cart.length === 0 || !shippingRate}>{busy ? "Placing your order…" : "Place order"}<span>↗</span></button><p className="checkout-terms">We use these details to confirm your order and arrange delivery.</p></form>}</section><aside className="checkout-aside"><p className="eyebrow">A GOOD CHOICE</p><h2>Your bag <span>({cart.reduce((sum, line) => sum + line.quantity, 0)})</span></h2>{cart.length === 0 ? <p className="aside-empty">{placed ? `Order ${orderNumber}` : "Your bag is waiting for a little something."}</p> : <div className="checkout-items">{cart.map(({ product, quantity }) => <div className="checkout-item" key={product.id}><div className={`cart-thumb ${product.color}`}>{(product.image.startsWith("/") || product.image.startsWith("https://")) ? <ProductImage src={product.image} alt={product.name} /> : product.image}<i>{quantity}</i></div><div><h3>{product.name}</h3><p>{product.category}</p></div><strong>{formatPrice(product.price_minor * quantity)}</strong></div>)}</div>}<div className="checkout-total"><span>Items subtotal</span><strong>{formatPrice(placed ? placedSubtotal : total)}</strong></div><div className="checkout-total shipping-line"><span>Shipping</span><strong>{placed ? formatPrice(placedShipping) : shippingFee === null ? "Select delivery state" : formatPrice(shippingFee)}</strong></div><div className="checkout-total order-grand-total" aria-live="polite"><span>Order total</span><strong>{placed ? formatPrice(placedTotal) : orderTotal === null ? "Awaiting delivery state" : formatPrice(orderTotal)}</strong></div><p className="checkout-shipping">Shipping is charged once per order and included in the total to transfer.</p>{shipping.error && !placed && <p className="shipping-error" role="alert">{shipping.error}</p>}<p className="checkout-shipping">Need help with an order or complaint? <a href="mailto:support@makatechlimited.com?subject=Shopora%20order%20support">Email support@makatechlimited.com</a>. Include your order number if you have one.</p><a className="back-link" href="/">← Keep looking around</a></aside></div></main>;
+  const subtotal=receipt?.subtotalMinor??total;
+  const shippingFee=receipt?.shippingMinor??rate?.fee_minor;
+  return <main className="checkout-page">
+    <header className="checkout-header wrap"><a className="brand" href="/">shopora<span>✳</span></a><a className="back-link checkout-back" href="/#shop">← Back to shopping</a></header>
+    <div className="checkout-layout wrap"><section className="checkout-main"><p className="eyebrow">THE LAST LITTLE STEP</p><h1>Almost <em>yours.</em></h1><p role="status">{cartError||syncStatus}</p>
+      {notice&&<div className={receipt?"order-notice success":"order-notice"} role={receipt?"status":"alert"}>{notice}</div>}
+      {receipt?<>
+        <section className="bank-transfer"><h2>{receipt.simulated?"Simulated payment":"Payment instructions"}</h2>
+          {receipt.simulated?<><p>No payment was taken. Do not transfer money.</p><p>Test total: {formatPrice(receipt.totalMinor)}</p><a href="/preview">Open simulated test inbox</a></>:<><dl><div><dt>Total to transfer</dt><dd>{formatPrice(receipt.totalMinor)}</dd></div><div><dt>Bank</dt><dd>{bankTransfer.bank}</dd></div><div><dt>Account name</dt><dd>{bankTransfer.accountName}</dd></div><div><dt>Account number</dt><dd>{bankTransfer.accountNumber}</dd></div></dl><p>Use <strong>{receipt.orderNumber}</strong> as the transfer narration. Your order stays pending until payment is confirmed.</p></>}
+        </section><p><a href="/orders">Your orders</a></p><a className="pill-button dark" href="/">Back to the shop ↗</a>
+      </>:<form className="checkout-form page-form" onSubmit={placeOrder}>
+        <div className="checkout-section-title"><h2>Sender details</h2><span>Your contact information</span></div>
+        <div className="checkout-field-row"><label>Sender’s full name<input name="senderName" required maxLength={120} autoComplete="name"/></label><label>Sender’s phone<input name="senderPhone" type="tel" required minLength={7} maxLength={30} autoComplete="tel"/></label></div>
+        <label>Email for order updates<input name="email" type="email" required maxLength={254} autoComplete="email"/></label>
+        <div className="checkout-section-title"><h2>Delivery details</h2></div>
+        <label style={{display:"flex",alignItems:"center",gap:10}}><input style={{width:"auto"}} type="checkbox" checked={sameReceiver} onChange={event=>setSameReceiver(event.target.checked)}/>I’m receiving this order</label>
+        {!sameReceiver&&<div className="checkout-field-row"><label>Receiver’s full name<input name="receiverName" required maxLength={120} autoComplete="shipping name"/></label><label>Receiver’s phone<input name="receiverPhone" type="tel" required minLength={7} maxLength={30} autoComplete="shipping tel"/></label></div>}
+        <div className="checkout-field-row"><label>City or town<input name="location" required maxLength={80} autoComplete="address-level2"/></label><label>Delivery state<select name="state" required autoComplete="shipping address-level1" value={deliveryState} onChange={event=>setDeliveryState(event.target.value)} disabled={shipping.loading||!shipping.rates.length}><option value="">{shipping.loading?"Loading delivery options…":"Select your state"}</option>{shipping.rates.map(item=><option key={item.state} value={item.state}>{item.state}</option>)}</select></label></div>
+        <label>Delivery street address<textarea name="address" required maxLength={600} autoComplete="street-address" rows={3}/></label>
+        {shipping.error&&<p role="alert" className="shipping-error">{shipping.error}</p>}
+        <div className="checkout-section-title"><h2>Payment</h2><span>{preview?"Simulated payment":"Bank transfer"}</span></div>
+        <p className="pending-note">{preview?"Test only. No payment is taken, no delivery is arranged, and confirmation goes to the simulated inbox.":"After placing your order we will show transfer instructions and send the order details by email."}</p>
+        <button className="pill-button dark full" disabled={busy||!cartReady||!cart.length||!rate}>{busy?"Placing your order…":"Place order"}<span>↗</span></button>
+      </form>}
+    </section><aside className="checkout-aside"><p className="eyebrow">A GOOD CHOICE</p><h2>Your bag <span>({cart.reduce((sum,line)=>sum+line.quantity,0)})</span></h2>{!cart.length?<p>{receipt?`Order ${receipt.orderNumber}`:"Your bag is empty."}</p>:<div className="checkout-items">{cart.map(({product,quantity})=><div key={product.id} className="checkout-item"><div className={`cart-thumb ${product.color}`}>{product.image.startsWith("/")||product.image.startsWith("https://")?<ProductImage src={product.image} alt={product.name}/>:product.image}<i>{quantity}</i></div><div><h3>{product.name}</h3><p>{product.category}</p></div><strong>{formatPrice(product.price_minor*quantity)}</strong></div>)}</div>}
+      <div className="checkout-total"><span>Items subtotal</span><strong>{formatPrice(subtotal)}</strong></div><div className="checkout-total"><span>Shipping</span><strong>{shippingFee===undefined?"Select delivery state":formatPrice(shippingFee)}</strong></div><div className="checkout-total" aria-live="polite"><span>Order total</span><strong>{shippingFee===undefined?"Awaiting delivery state":formatPrice(receipt?.totalMinor??subtotal+shippingFee)}</strong></div>
+    </aside></div>
+  </main>;
 }
